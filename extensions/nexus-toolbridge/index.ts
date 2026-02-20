@@ -1,6 +1,5 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { emptyPluginConfigSchema, jsonResult } from "openclaw/plugin-sdk";
-import { registerPluginHooksFromDir } from "openclaw/plugin-sdk";
 import crypto from "node:crypto";
 
 function normalizeBaseUrl(input: string | undefined | null): string {
@@ -109,13 +108,8 @@ const nexusToolbridgePlugin = {
   description: "Expose Nexus integration tools to OpenClaw by proxying Nexus /api/openclaw/tools/execute.",
   configSchema: emptyPluginConfigSchema(),
   register(api: OpenClawPluginApi) {
-    if (typeof registerPluginHooksFromDir === "function") {
-      registerPluginHooksFromDir(api, "./hooks");
-    } else {
-      api.logger.warn(
-        "[nexus-toolbridge] registerPluginHooksFromDir is unavailable in this OpenClaw build; continuing without bundled hooks.",
-      );
-    }
+    // Note: Hooks are loaded via managed hooks directory (/data/.openclaw/hooks/)
+    // See: nexus-identity-primer hook
 
     api.registerTool((ctx) => {
       const sessionKey = ctx.sessionKey;
