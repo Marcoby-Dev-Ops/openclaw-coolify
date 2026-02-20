@@ -1,6 +1,16 @@
 function normalizeBaseUrl(input: string | undefined | null): string {
   const raw = String(input ?? "").trim();
-  return raw ? raw.replace(/\/+$/, "") : "";
+  if (!raw) return "";
+  
+  // Remove trailing slashes
+  let url = raw.replace(/\/+$/, "");
+  
+  // Ensure protocol is present
+  if (!/^https?:\/\//i.test(url)) {
+    url = "https://" + url;
+  }
+  
+  return url;
 }
 
 function resolveNexusApiUrl(): string {
