@@ -65,7 +65,7 @@ async function callNexusTool(params: {
   if (!nexusUser?.userId) {
     throw new Error(
       "Cannot resolve Nexus user id for tool execution. " +
-        "Expected sessionKey to contain `openai-user:<nexusUserId>:<conversationId>`.",
+      "Expected sessionKey to contain `openai-user:<nexusUserId>:<conversationId>`.",
     );
   }
 
@@ -221,6 +221,44 @@ const nexusToolbridgePlugin = {
             query: { type: "string" },
             unreadOnly: { type: "boolean" },
             limit: { type: "number" },
+            timezone: { type: "string", description: "IANA timezone (e.g. America/Chicago). Defaults to user profile timezone or UTC." },
+          },
+        }),
+        makeTool("nexus_send_email", "Send an email to specific recipients with a subject, body, and optional CC, BCC, and attachments.", {
+          type: "object",
+          additionalProperties: false,
+          required: ["to", "subject", "body"],
+          properties: {
+            provider: { type: "string", enum: ["auto", "microsoft", "google-workspace"], description: "The email provider to use. Defaults to 'auto'." },
+            to: { type: "string", description: "A single recipient email address or a comma-separated list." },
+            subject: { type: "string", description: "The subject line of the email." },
+            body: { type: "string", description: "The main content of the email (HTML or plain text)." },
+            cc: { type: "string", description: "Optional recipient email address or comma-separated list." },
+            bcc: { type: "string", description: "Optional recipient email address or comma-separated list." },
+            attachments: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  filename: { type: "string" },
+                  path: { type: "string" },
+                  contentType: { type: "string" },
+                },
+                required: ["filename", "path"],
+              },
+            },
+          },
+        }),
+        makeTool("nexus_get_calendar_events", "Fetch upcoming calendar events for a specific date range.", {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            provider: { type: "string", enum: ["auto", "microsoft", "google-workspace"] },
+            datePreset: { type: "string", enum: ["today", "last_7_days", "last_30_days", "this_week", "last_week", "this_month", "last_month", "custom"] },
+            startDate: { type: "string" },
+            endDate: { type: "string" },
+            limit: { type: "number" },
+            timezone: { type: "string", description: "IANA timezone. Defaults to user profile timezone or UTC." },
           },
         }),
         makeTool("nexus_disconnect_integration", "Disconnect an integration by ID or provider.", {
@@ -229,6 +267,48 @@ const nexusToolbridgePlugin = {
           properties: {
             integrationId: { type: "string" },
             provider: { type: "string" },
+          },
+        }),
+        makeTool("nexus_list_files", "List all files in the current user's workspace.", {
+          type: "object",
+          additionalProperties: false,
+          properties: {},
+        }),
+        makeTool("nexus_read_file", "Read the contents of a file from the user's workspace.", {
+          type: "object",
+          additionalProperties: false,
+          required: ["filename"],
+          properties: {
+            filename: { type: "string", description: "Name of the file to read" },
+          },
+        }),
+        makeTool("nexus_write_file", "Create or overwrite a file in the user's workspace.", {
+          type: "object",
+          additionalProperties: false,
+          required: ["filename", "content"],
+          properties: {
+            filename: { type: "string", description: "Name of the file to create" },
+            content: { type: "string", description: "File content." },
+            encoding: { type: "string", enum: ["utf-8", "base64"], default: "utf-8" },
+          },
+        }),
+        makeTool("create_integration_from_url", "Create a new Specialized Agent and Tool Integration by reading API documentation from a URL.", {
+          type: "object",
+          additionalProperties: false,
+          required: ["url"],
+          properties: {
+            url: { type: "string", description: "URL of the API documentation" },
+            name: { type: "string", description: "Optional name for its integration" },
+          },
+        }),
+        makeTool("nexus_generate_image", "Generate high-quality images and illustrations. Images are saved to your workspace.", {
+          type: "object",
+          additionalProperties: false,
+          required: ["prompt"],
+          properties: {
+            prompt: { type: "string", description: "Detailed description of the image to generate" },
+            aspect_ratio: { type: "string", enum: ["1:1", "16:9", "4:3", "3:2"], default: "1:1" },
+            filename: { type: "string", description: "Optional filename for the saved image" },
           },
         }),
       ];

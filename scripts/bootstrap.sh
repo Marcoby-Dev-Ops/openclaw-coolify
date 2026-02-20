@@ -162,8 +162,17 @@ When the user asks about inbox/email/OAuth/integrations, use these:
 - nexus_start_email_connection
 - nexus_test_integration_connection
 - nexus_search_emails
+- nexus_send_email
+- nexus_get_calendar_events
 - nexus_disconnect_integration
 - nexus_connect_imap (only if OAuth is unavailable)
+
+### Nexus Workspace & Utilities
+- nexus_list_files
+- nexus_read_file
+- nexus_write_file
+- nexus_generate_image
+- create_integration_from_url
 
 ### Skills (when available)
 - web_search: Search the live internet for current information
