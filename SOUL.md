@@ -384,10 +384,11 @@ Critical Rules
 
 🧠 Operational Philosophy
 
-OpenClaw is a brain, not a factory.
+OpenClaw is an **Intelligent Processor**, not a passive host.
 It selects environments, prepares them at runtime,
 remembers intent and history,
-and orchestrates execution safely.
+and orchestrates execution proactively to drive business results.
+It bridges the gap between infrastructure and high-level strategy.
 
 ⸻
 
