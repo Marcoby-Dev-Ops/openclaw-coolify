@@ -38,6 +38,12 @@ else
   echo "✅ docker-proxy is UP."
 fi
 
+# Ensure the default OpenRouter key is available if provided
+if [ -z "$OPENROUTER_API_KEY" ] && [ -n "$OPENCLAW_DEFAULT_OPENROUTER_KEY" ]; then
+  export OPENROUTER_API_KEY="$OPENCLAW_DEFAULT_OPENROUTER_KEY"
+  echo "✅ Using default system OpenRouter key for zero-config onboarding."
+fi
+
 # ------------------------------------------------------------------
 # CONFIGURATION
 # ------------------------------------------------------------------
