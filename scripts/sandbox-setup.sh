@@ -30,7 +30,15 @@ if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
     exit 1
 fi
 
-echo "   Tagging as $TARGET_IMAGE..."
-docker tag "$BASE_IMAGE" "$TARGET_IMAGE"
+echo "   Building customized $TARGET_IMAGE with GitHub CLI..."
+docker build -t "$TARGET_IMAGE" - <<EOF
+FROM $BASE_IMAGE
+RUN apt-get update && apt-get install -y curl git && \\
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \\
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \\
+    echo "deb [arch=\$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list && \\
+    apt-get update && apt-get install gh -y && \\
+    rm -rf /var/lib/apt/lists/*
+EOF
 
 echo "✅ Sandbox base image ready: $TARGET_IMAGE"
