@@ -358,7 +358,7 @@ if [ -f "$CONFIG_FILE" ]; then
        --arg token "${OPENCLAW_GATEWAY_TOKEN:-sk-openclaw-local}" \
        --arg port "${OPENCLAW_GATEWAY_PORT:-18790}" \
        --arg bind "${OPENCLAW_GATEWAY_BIND:-0.0.0.0}" \
-       --arg or_key "${OPENROUTER_API_KEY}" \
+       --arg or_key "${OPENROUTER_API_KEY:-$OPENCLAW_DEFAULT_OPENROUTER_KEY}" \
        --arg nexus_workspace "$NEXUS_WORKSPACE_DIR" \
        --arg nexus_plugin_available "$NEXUS_TOOLBRIDGE_AVAILABLE" \
        '
