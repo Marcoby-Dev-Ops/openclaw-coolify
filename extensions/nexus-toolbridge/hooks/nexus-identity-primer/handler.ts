@@ -7,7 +7,19 @@ function normalizeBaseUrl(input: string | undefined | null): string {
   
   // Ensure protocol is present
   if (!/^https?:\/\//i.test(url)) {
-    url = "https://" + url;
+    // Check if it's a local address
+    const isLocal = url.includes('localhost') || url.includes('127.0.0.1') || url.includes('host.docker.internal');
+    url = (isLocal ? "http://" : "https://") + url;
+  }
+  
+  // Validate URL format
+  try {
+    new URL(url);
+    console.log(`[nexus-identity-primer] Normalized URL: ${url}`);
+  } catch (e) {
+    console.error(`[nexus-identity-primer] Invalid URL after normalization: ${url}`, e);
+    // Return a safe default if URL is invalid
+    return "https://napi.marcoby.net";
   }
   
   return url;

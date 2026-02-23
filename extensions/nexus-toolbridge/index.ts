@@ -11,7 +11,19 @@ function normalizeBaseUrl(input: string | undefined | null): string {
   
   // Ensure protocol is present
   if (!/^https?:\/\//i.test(url)) {
-    url = "https://" + url;
+    // Check if it's a local address
+    const isLocal = url.includes('localhost') || url.includes('127.0.0.1') || url.includes('host.docker.internal');
+    url = (isLocal ? "http://" : "https://") + url;
+  }
+  
+  // Validate URL format
+  try {
+    new URL(url);
+    console.log(`[nexus-toolbridge] Normalized URL: ${url}`);
+  } catch (e) {
+    console.error(`[nexus-toolbridge] Invalid URL after normalization: ${url}`, e);
+    // Return a safe default if URL is invalid
+    return "https://napi.marcoby.net";
   }
   
   return url;
@@ -81,35 +93,53 @@ async function callNexusTool(params: {
   const correlationId = params.toolCallId || crypto.randomUUID();
   const endpoint = `${nexusApiUrl}/api/openclaw/tools/execute`;
 
+  // Validate the endpoint URL
+  try {
+    new URL(endpoint);
+  } catch (e) {
+    params.api.logger.error(`[nexus-toolbridge] Invalid endpoint URL: ${endpoint}`, e);
+    throw new Error(`Failed to parse URL from ${endpoint}`);
+  }
+
   params.api.logger.info(
-    `[nexus-toolbridge] tool=${params.toolName} userId=${nexusUser.userId} corr=${correlationId}`,
+    `[nexus-toolbridge] tool=${params.toolName} userId=${nexusUser.userId} corr=${correlationId} endpoint=${endpoint}`,
   );
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-OpenClaw-Api-Key": apiKey,
-      "X-Nexus-User-Id": nexusUser.userId,
-      "X-Correlation-Id": correlationId,
-    },
-    body: JSON.stringify({ tool: params.toolName, args: params.args ?? {} }),
-    signal: params.signal,
-  });
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-OpenClaw-Api-Key": apiKey,
+        "X-Nexus-User-Id": nexusUser.userId,
+        "X-Correlation-Id": correlationId,
+      },
+      body: JSON.stringify({ tool: params.toolName, args: params.args ?? {} }),
+      signal: params.signal,
+    });
 
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const errMsg =
-      (payload && typeof payload === "object" && "error" in payload && (payload as any).error) ||
-      `Nexus tool execution failed (HTTP ${response.status})`;
-    throw new Error(String(errMsg));
-  }
+    const payload = await response.json().catch((e) => {
+      params.api.logger.error(`[nexus-toolbridge] Failed to parse JSON response: ${e.message}`);
+      return {};
+    });
+    
+    if (!response.ok) {
+      const errMsg =
+        (payload && typeof payload === "object" && "error" in payload && (payload as any).error) ||
+        `Nexus tool execution failed (HTTP ${response.status})`;
+      params.api.logger.error(`[nexus-toolbridge] Request failed: ${errMsg}`);
+      throw new Error(String(errMsg));
+    }
 
-  // Expected: { success: true, tool: "...", result: ... }
-  if (payload && typeof payload === "object" && "result" in payload) {
-    return (payload as any).result;
+    // Expected: { success: true, tool: "...", result: ... }
+    if (payload && typeof payload === "object" && "result" in payload) {
+      return (payload as any).result;
+    }
+    return payload;
+  } catch (e) {
+    params.api.logger.error(`[nexus-toolbridge] Tool execution error: ${e.message}`);
+    throw e;
   }
-  return payload;
 }
 
 const nexusToolbridgePlugin = {
