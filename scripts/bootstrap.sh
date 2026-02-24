@@ -347,6 +347,7 @@ if [ -f "$CONFIG_FILE" ]; then
        --arg or_key "${OPENROUTER_API_KEY:-$OPENCLAW_DEFAULT_OPENROUTER_KEY}" \
        --arg nexus_workspace "$NEXUS_WORKSPACE_DIR" \
        --arg nexus_plugin_available "$NEXUS_TOOLBRIDGE_AVAILABLE" \
+       --arg force_defaults "${FORCE_MODEL_DEFAULTS:-0}" \
        '
          def with_or_without_nexus_tool(base):
            if $nexus_plugin_available == "true" then
@@ -354,16 +355,23 @@ if [ -f "$CONFIG_FILE" ]; then
            else
              (base | map(select(. != "nexus_*")) | unique)
            end;
-         # Fail-closed fallback logic (v0.8)
-         .agents.defaults.model = { "primary": $model, "fallbacks": (if ($fallbacks | fromjson?) then ($fallbacks | fromjson) else [] end) }
+         
+         # 🛠️ Selective Model Enforcement (v0.8.1)
+         # Only overwrite the primary model/fallbacks if they are missing OR FORCE_MODEL_DEFAULTS=1
+         (if (.agents.defaults.model == null or $force_defaults == "1") then
+            .agents.defaults.model = { "primary": $model, "fallbacks": (if ($fallbacks | fromjson?) then ($fallbacks | fromjson) else [] end) }
+          else . end)
          | .gateway.auth.token = $token
          | .gateway.port = ($port|tonumber)
          | .gateway.bind = $bind
          | .gateway.http.endpoints.chatCompletions.enabled = true
          | .env.OPENROUTER_API_KEY = $or_key
          | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
-         | .agents.defaults.models[$model] = {}
-         | reduce ($fallbacks | fromjson? // [$fallbacks])[] as $fb (.; .agents.defaults.models[$fb] = {})
+         # Ensure the models requested in defaults are actually mapped in the models config
+         | (if (.agents.defaults.model != null) then
+             (.agents.defaults.model.primary as $p | .agents.defaults.models[$p] = {})
+             | reduce (.agents.defaults.model.fallbacks[]?) as $fb (.; .agents.defaults.models[$fb] = {})
+           else . end)
          # 3. Authority Separation & Tool Tiering (v0.8)
          # Ensure sandboxed sessions (workers) can NEVER call Nexus tools.
          | .tools.profile = "full"
