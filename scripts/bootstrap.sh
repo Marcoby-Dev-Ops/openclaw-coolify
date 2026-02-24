@@ -2,10 +2,11 @@
 set -e
 
 # ------------------------------------------------------------------
-# 🛡️ Quick Sanity Check for Docker Proxy
-# Note: Docker Compose ensures the proxy is healthy before starting,
-#       so this is just a quick verification, not a long wait.
+# 🛡️ Docker Socket Safety & Enforcement
 # ------------------------------------------------------------------
+export DOCKER_HOST="tcp://docker-proxy:2375"
+echo "🧱 Enforcing DOCKER_HOST=$DOCKER_HOST (Nexus Control Plane v0.8)"
+
 WAIT_COUNT=0
 MAX_WAIT=5
 echo "⏳ Verifying docker-proxy is reachable..."
@@ -15,6 +16,9 @@ until nc -z docker-proxy 2375 >/dev/null 2>&1 || [ $WAIT_COUNT -eq $MAX_WAIT ]; 
 done
 
 if ! nc -z docker-proxy 2375 >/dev/null 2>&1; then
+  echo "❌ docker-proxy unreachable. Refusing to start."
+  exit 1
+fi
   echo "⏳ docker-proxy not reached yet. Will re-check in background (sandbox may be temporarily unavailable)."
 
   # Defer warning so we don't spam on cold-start races.
@@ -54,6 +58,11 @@ NEXUS_WORKSPACE_DIR="$OPENCLAW_STATE/workspace-nexus"
 
 mkdir -p "$OPENCLAW_STATE" "$WORKSPACE_DIR" "$NEXUS_WORKSPACE_DIR"
 chmod 700 "$OPENCLAW_STATE"
+
+# Governance: Explicit Runtime Caps
+export OPENCLAW_SANDBOX_MAX_CONTAINERS="${OPENCLAW_SANDBOX_MAX_CONTAINERS:-10}"
+export OPENCLAW_AGENTS_MAX_CONCURRENT="${OPENCLAW_AGENTS_MAX_CONCURRENT:-4}"
+echo "💰 Economic Governor: Max Sandboxes=$OPENCLAW_SANDBOX_MAX_CONTAINERS, Max Concurrent Agents=$OPENCLAW_AGENTS_MAX_CONCURRENT"
 
 mkdir -p "$OPENCLAW_STATE/credentials"
 mkdir -p "$OPENCLAW_STATE/agents/main/sessions"
@@ -139,66 +148,37 @@ echo "🧠 Seeding Nexus agent workspace at $NEXUS_WORKSPACE_DIR..."
 cat >"$NEXUS_WORKSPACE_DIR/SOUL.md" <<'EOF'
 # SOUL.md - Nexus Operational Protocols
 
-This workspace is for the Nexus Executive Assistant. Use the following protocols for all runtime operations.
+You are the Nexus Executive Assistant (Alex). This workspace is your primary command center.
 
 ## Core Philosophy
 
-- **Bias for Action:** Don't just answer questions; propose concrete steps and execute them when authorized.
-- **Business Context:** Always frame your responses in the context of the user's business goals (growth, efficiency, clarity).
-- **Transparency:** Be clear about what you can do (tools) and what you know (context).
-- **Evidence & Citations:** Always cite sources, news articles, and git commits.
-- **Proactive Behaviors:** When a user mentions a new project, offer to create a workspace. Suggest high-value workflows. For complex tasks, break them down into a plan first.
+- **Runtime Discipline:** You may orchestrate sandbox containers through approved OpenClaw sandbox tools only.
+- **Protocol Alignment:** You MUST follow the Runtime Orchestration Protocol at all times.
+- **Image Sovereignty:** You do not rely on templates or custom builds. You MAY NOT use docker build or docker push.
+- **Identity & Ethics:** Your identity is authoritative via the Nexus Gateway. Your execution is constrained by OpenClaw's safety directives.
 
-- Use your REAL execution capabilities proactively. Take action, don't just suggest.
-- Be concise and operational.
-- Never claim you lack access or cannot perform an action. Use your tools.
-- Never claim an integration is connected/expired unless you just verified it using a Nexus tool.
+## Operational Directives
 
-## Available Tools
+- **Bias for Action:** Proactively suggest and implement workflows within technical boundaries.
+- **Execution Constraints:** You MAY NOT access host containers outside managed sandboxes.
+- **Tool Discipline:** Use the specialized `nexus_*` tools for high-level orchestration; delegate intensive dev tasks to specialized sandbox agents.
 
-You have access to a full suite of tools. USE THEM:
+## Capability Layers
 
-### Core Tools (always available)
-- exec: Run shell commands (git clone, npm install, scripts, system operations)
-- read: Read files from the workspace
-- write: Create or overwrite files
-- edit: Make targeted edits to existing files
-- apply_patch: Apply structured multi-file edits
-- browser: Browse web pages and extract content
-- sessions_list / sessions_history / sessions_send / sessions_spawn: Session management
+### Tier 1: Orchestration
+- exec: Shell access for file management, git, and sandbox management.
+- sandbox: Orchestrate project-specific dev environments using image-first rules.
 
-### Nexus Integration Tools
-When the user asks about inbox/email/OAuth/integrations, use these:
+### Tier 2: Business Integration
 - nexus_get_integration_status
-- nexus_resolve_email_provider
-- nexus_start_email_connection
-- nexus_test_integration_connection
-- nexus_search_emails
-- nexus_send_email
+- nexus_search_emails / nexus_send_email
 - nexus_get_calendar_events
-- nexus_disconnect_integration
-- nexus_connect_imap (only if OAuth is unavailable)
-
-### Nexus Workspace & Utilities
-- nexus_list_files
-- nexus_read_file
-- nexus_write_file
 - nexus_generate_image
-- create_integration_from_url
 
-### Skills (when available)
-- web_search: Search the live internet for current information
-- advanced_scrape: Extract data from specific URLs
-- create_skill: Generate new automated capabilities
-- list_skills / search_skills / install_skill: Manage skills
-
-## Tool Disclosure (Required)
-
-When you call any Nexus tool, place tool disclosure at the END of your response:
-
-1. Write your full answer first.
-2. At the bottom, add: TOOL_USED <toolName>
-3. Follow with a 1-3 sentence summary of what the tool returned.
+### Tier 3: Intelligence
+- browser: Full web interaction
+- web_search: Live internet access
+- advanced_scrape: Data extraction
 EOF
 
 cat >"$NEXUS_WORKSPACE_DIR/AGENTS.md" <<'EOF'
@@ -374,7 +354,8 @@ if [ -f "$CONFIG_FILE" ]; then
            else
              (base | map(select(. != "nexus_*")) | unique)
            end;
-         .agents.defaults.model = { "primary": $model, "fallbacks": ($fallbacks | fromjson? // [$fallbacks]) }
+         # Fail-closed fallback logic (v0.8)
+         .agents.defaults.model = { "primary": $model, "fallbacks": (if ($fallbacks | fromjson?) then ($fallbacks | fromjson) else [] end) }
          | .gateway.auth.token = $token
          | .gateway.port = ($port|tonumber)
          | .gateway.bind = $bind
@@ -383,54 +364,61 @@ if [ -f "$CONFIG_FILE" ]; then
          | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
          | .agents.defaults.models[$model] = {}
          | reduce ($fallbacks | fromjson? // [$fallbacks])[] as $fb (.; .agents.defaults.models[$fb] = {})
-         # Ensure sandboxed sessions can call Nexus tools (non-main agents run in sandbox by default).
+         # 3. Authority Separation & Tool Tiering (v0.8)
+         # Ensure sandboxed sessions (workers) can NEVER call Nexus tools.
          | .tools.profile = "full"
          | del(.tools.alsoAllow)
          | .tools.sandbox.tools.allow = (
-             with_or_without_nexus_tool(
-               if (.tools.sandbox.tools.allow | type) == "array" then
-                 .tools.sandbox.tools.allow
-               else
-                 [
-                   "exec",
-                   "process",
-                   "read",
-                   "write",
-                   "edit",
-                   "apply_patch",
-                   "image",
-                   "sessions_list",
-                   "sessions_history",
-                   "sessions_send",
-                   "sessions_spawn",
-                   "session_status"
-                 ]
-               end
-             )
+             [
+               "exec",
+               "process",
+               "read",
+               "write",
+               "edit",
+               "apply_patch",
+               "image",
+               "sessions_list",
+               "sessions_history",
+               "sessions_send",
+               "sessions_spawn",
+               "session_status"
+             ]
            )
-         # Ensure a dedicated Nexus agent exists with full tools + Nexus bridged tools.
+         # Tiered Agent Access
          | .agents.list = (
              (.agents.list // [])
-             | map(select(.id != "nexus"))
-             + [
-                 if $nexus_plugin_available == "true" then
+             | map(
+                 if .id == "main" then
+                   # Tier 1: Executive Brain - Orchestration only, no exec/sandbox tools.
+                   .tools = { "profile": "restricted" }
+                 elif .id == "nexus" then
+                   # Tier 2: Business Agent - nexus_* + intelligence only, no exec/sandbox.
                    {
                      "id": "nexus",
                      "name": "Nexus Assistant",
                      "workspace": $nexus_workspace,
                      "sandbox": { "mode": "off" },
-                     "tools": { "profile": "full", "alsoAllow": ["nexus_*"] }
+                     "tools": { 
+                       "profile": "restricted", 
+                       "alsoAllow": (if $nexus_plugin_available == "true" then ["nexus_*"] else [] end) + ["browser", "web_search", "advanced_scrape"] 
+                     }
                    }
-                 else
-                   {
-                     "id": "nexus",
-                     "name": "Nexus Assistant",
-                     "workspace": $nexus_workspace,
-                     "sandbox": { "mode": "off" },
-                     "tools": { "profile": "full" }
-                   }
+                 else .
                  end
-               ]
+               )
+             # Ensure 'nexus' agent entry is always present if map didn't catch it
+             | if any(.[]; .id == "nexus") then . else . + [
+                 {
+                   "id": "nexus",
+                   "name": "Nexus Assistant",
+                   "workspace": $nexus_workspace,
+                   "sandbox": { "mode": "off" },
+                   "tools": { 
+                     "profile": "restricted", 
+                     "alsoAllow": (if $nexus_plugin_available == "true" then ["nexus_*"] else [] end) + ["browser", "web_search", "advanced_scrape"] 
+                   }
+                 }
+               ] end
            )
        ' \
        "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"

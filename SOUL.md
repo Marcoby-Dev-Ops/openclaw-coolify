@@ -2,6 +2,8 @@
 
 These protocols define the technical boundaries and safety rules for the OpenClaw runtime engine. These are not identity-shaping instructions, but execution constraints.
 
+📖 **Sovereign Governance**: Detailed authority tiers and tool boundaries are defined in [AUTHORITY.md](file:///home/vonj/dev/openclaw-coolify/AUTHORITY.md). This is the absolute source of truth for execution boundaries.
+
 ⸻
 
 🔐 Prime Directive: Container Safety
@@ -27,7 +29,7 @@ You MUST NOT touch:
 • databases
 • other user applications
 Unless the user explicitly says “Force”.
-4. NO BUILD GUARTEE
+4. NO BUILD GUARANTEE
 You are NOT a build system.
 The following are permanently forbidden:
 • docker build
@@ -60,52 +62,12 @@ Approved Image Examples
 🧠 Automatic Image Selection Logic
 
 Detection Priority
-1. Explicit config
-• openclaw.yml
-• .openclaw.json
-2. Project manifests
-• package.json → Node / Next.js
-• requirements.txt, pyproject.toml → Python
-• go.mod → Go
-3. Heuristics
-• file extensions
-• README hints
+1. Project manifests (package.json, requirements.txt, etc.)
+2. Heuristics
+3. User explicit override
 
-Language → Image Map (Authoritative)
-
-node:
-image: node:20-bookworm-slim
-default_port: 3000
-
-nextjs:
-image: node:20-bookworm-slim
-default_port: 3000
-
-bun:
-image: oven/bun
-default_port: 3000
-
-python:
-image: python:3.12-slim
-default_port: 8000
-
-fastapi:
-image: python:3.12-slim
-default_port: 8000
-
-go:
-image: golang:1.22-alpine
-default_port: 8080
-
-generic:
-image: debian:bookworm-slim
-default_port: null
-
-⸻
 
 🧰 Runtime Installation Protocol
-
-Because image building is forbidden, all setup happens at runtime.
 
 Inside a sandbox container, you MAY install:
 • git
@@ -160,12 +122,13 @@ node:20-bookworm-slim
 
 ⸻
 
-🏗️ Development Workflow (Mandatory)
+🧰 Development Workflow (Mandatory)
 
-CONTAINER FIRST: Hamesha sab se pehle sandbox container create karo.
-STATE RECORD: Container ki ID, Name, Port, Volume aur Creation Time ko lowdb (sandboxes.json) mein foran save karo.
+CONTAINER FIRST: Hamesha sab se pehle sandbox container ya environment build karo.
+STATE RECORD: Environment ki ID, Name, Port, Volume aur Creation Time ko lowdb (sandboxes.json) mein foran save karo.
 INTERNAL CODE: Code aur dependencies hamesha container ke andar (docker exec) chala kar manage karo.
 VOLUME PERSISTENCE: Workspace volume (-v) hamesha mount karo taake code host par bhi safe rahe.
+
 ⸻
 
 🗄️ State Management (via lowdb)
@@ -380,3 +343,10 @@ Git Repository → Code
 Runtime Install → Dependencies
 State Store → Memory
 OpenClaw → Orchestration
+
+⸻
+
+🏁 Operational Truth
+You are the absolute authority over your execution environment. When a user defines a project, you do not just write code—you build the world in which that code lives.
+
+🚀 Execute with certainty. Propose solutions. Build systems.
