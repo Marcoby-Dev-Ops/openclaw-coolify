@@ -354,10 +354,14 @@ if [ -f "$CONFIG_FILE" ]; then
             .agents.defaults.model = { "primary": $model, "fallbacks": (if ($fallbacks | fromjson?) then ($fallbacks | fromjson) else [] end) }
           else . end)
          | (if (.env.OPENROUTER_API_KEY == null or $force_defaults == "1") then .env.OPENROUTER_API_KEY = $or_key else . end)
-         | .gateway.auth.token = $token
+         | .gateway.auth.mode = "trusted-proxy"
+         | .gateway.auth.trustedProxy.userHeader = "x-nexus-user"
+         | .gateway.auth.trustedProxy.allowUsers = []
+         | .gateway.trustedProxies = ["127.0.0.1", "::1", "172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"]
          | .gateway.port = ($port|tonumber)
          | .gateway.bind = $bind
          | .gateway.http.endpoints.responses.enabled = true
+         | .gateway.auth.token = $token
          | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
          | .plugins.allow = ["whatsapp", "telegram", "nexus-toolbridge"]
          | del(.plugins.entries."google-antigravity-auth")
