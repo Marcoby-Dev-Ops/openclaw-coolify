@@ -291,7 +291,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
     },
     "list": [
       { "id": "main","default": true, "name": "default",  "workspace": "${OPENCLAW_WORKSPACE:-/data/openclaw-workspace}"},
-      { "id": "nexus", "name": "Nexus Assistant", "workspace": "$NEXUS_WORKSPACE_DIR", "sandbox": { "mode": "off" }, "tools": { "profile": "full", "alsoAllow": ["nexus_*"] } }
+      { "id": "nexus", "name": "Nexus Assistant", "workspace": "$NEXUS_WORKSPACE_DIR", "sandbox": { "mode": "off" }, "tools": { "profile": "minimal", "allow": ["nexus_*"] } }
     ]
   }
 }
@@ -392,8 +392,8 @@ if [ -f "$CONFIG_FILE" ]; then
              (.agents.list // [])
              | map(
                  if .id == "main" then
-                   # Tier 1: Executive Brain - Orchestration only, no exec/sandbox tools.
-                   .tools = { "profile": "restricted" }
+                   # Tier 1: Executive Brain - Orchestration only.
+                   .tools = { "profile": "minimal", "allow": ["group:sessions"] }
                  elif .id == "nexus" then
                    # Tier 2: Business Agent - nexus_* + intelligence only, no exec/sandbox.
                    {
@@ -402,8 +402,8 @@ if [ -f "$CONFIG_FILE" ]; then
                      "workspace": $nexus_workspace,
                      "sandbox": { "mode": "off" },
                      "tools": { 
-                       "profile": "restricted", 
-                       "alsoAllow": with_or_without_nexus_tool(["browser", "web_search", "advanced_scrape"]) 
+                       "profile": "minimal", 
+                       "allow": with_or_without_nexus_tool(["browser", "web_search", "advanced_scrape"]) 
                      }
                    }
                  else .
@@ -417,8 +417,8 @@ if [ -f "$CONFIG_FILE" ]; then
                    "workspace": $nexus_workspace,
                    "sandbox": { "mode": "off" },
                    "tools": { 
-                     "profile": "restricted", 
-                     "alsoAllow": with_or_without_nexus_tool(["browser", "web_search", "advanced_scrape"]) 
+                     "profile": "minimal", 
+                     "allow": with_or_without_nexus_tool(["browser", "web_search", "advanced_scrape"]) 
                    }
                  }
                ] end
