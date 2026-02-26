@@ -16,9 +16,6 @@ until nc -z docker-proxy 2375 >/dev/null 2>&1 || [ $WAIT_COUNT -eq $MAX_WAIT ]; 
 done
 
 if ! nc -z docker-proxy 2375 >/dev/null 2>&1; then
-  echo "❌ docker-proxy unreachable. Refusing to start."
-  exit 1
-fi
   echo "⏳ docker-proxy not reached yet. Will re-check in background (sandbox may be temporarily unavailable)."
 
   # Defer warning so we don't spam on cold-start races.
@@ -315,7 +312,7 @@ if [ -f "$CONFIG_FILE" ]; then
     
     # 1. Fallback Construction
     # Clean up and convert comma-list to JSON array if it isn't already JSON
-    if [[ "$OPENCLAW_AGENTS_DEFAULTS_MODEL_FALLBACKS" != [* ]]; then
+    if [[ "$OPENCLAW_AGENTS_DEFAULTS_MODEL_FALLBACKS" != \[* ]]; then
         # Convert "a, b, c" to ["a","b","c"]
         JSON_FALLBACKS=$(echo "$OPENCLAW_AGENTS_DEFAULTS_MODEL_FALLBACKS" | jq -Rc 'split(",") | map(sub("^\\s+"; "")) | map(sub("\\s+$"; ""))')
         FINAL_FALLBACKS="$JSON_FALLBACKS"
@@ -414,7 +411,7 @@ if [ -f "$CONFIG_FILE" ]; then
                  else .
                  end
                )
-             # Ensure 'nexus' agent entry is always present if map didn't catch it
+             # Ensure nexus agent entry is always present if map did not catch it
              | if any(.[]; .id == "nexus") then . else . + [
                  {
                    "id": "nexus",

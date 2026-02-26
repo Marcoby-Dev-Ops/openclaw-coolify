@@ -18,23 +18,6 @@ Unlike SaaS assistants where your data lives on someone else’s servers, OpenCl
 
 > **Note**: This repository is designed to work seamlessly with **Nexus**. Deploying both on the same network allows for optimized internal communication.
 
-## Staging Cutover: Upstream Image + Fast Rollback
-
-Use `docker-compose.upstream-staging.yaml` when you want to test upstream OpenClaw without rebuilding from your fork.
-
-1. Set a pinned upstream digest:
-   - `OPENCLAW_UPSTREAM_IMAGE=ghcr.io/openclaw/openclaw@sha256:<digest>`
-2. Keep a rollback image tag available:
-   - `OPENCLAW_ROLLBACK_IMAGE=ghcr.io/marcoby/openclaw-fork:stable-YYYYMMDD`
-3. Launch staging:
-   - `docker compose -f docker-compose.upstream-staging.yaml --env-file .env up -d`
-4. Roll back immediately if needed:
-   - `OPENCLAW_UPSTREAM_IMAGE=$OPENCLAW_ROLLBACK_IMAGE docker compose -f docker-compose.upstream-staging.yaml --env-file .env up -d`
-
-Reference template: `.env.upstream-staging.example`.
-
----
-
 ## 📦 Post-Deployment (Ready)
 Once the container is running and healthy:
 
