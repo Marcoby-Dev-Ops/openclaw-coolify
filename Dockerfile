@@ -143,7 +143,7 @@ RUN ln -sf /data/.claude/bin/claude /usr/local/bin/claude 2>/dev/null || true &&
 
 # ✅ FINAL PATH (important)
 ENV PATH="/opt/venv/bin:/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin:/data/.local/bin:/data/.npm-global/bin:/data/.bun/bin:/data/.bun/install/global/bin:/data/.claude/bin:/data/.kimi/bin"
-
+# Set OpenClaw port and run app
 ARG PORT=18790
 EXPOSE ${PORT}
 CMD ["bash", "/app/scripts/bootstrap.sh"]
