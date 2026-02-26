@@ -216,9 +216,6 @@ if [ ! -f "$CONFIG_FILE" ]; then
       "telegram": {
         "enabled": true
       },
-      "google-antigravity-auth": {
-        "enabled": true
-      },
       "nexus-toolbridge": {
         "enabled": true
       }
@@ -236,10 +233,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
   "port": $OPENCLAW_GATEWAY_PORT,
   "mode": "local",
     "bind": "0.0.0.0",
-    "controlUi": {
-      "enabled": true,
-      "allowInsecureAuth": false
-    },
+    "controlUi": { "enabled": false },
     "trustedProxies": [
       "*"
     ],
@@ -361,6 +355,7 @@ if [ -f "$CONFIG_FILE" ]; then
          | .gateway.auth.token = $token
          | .gateway.port = ($port|tonumber)
          | .gateway.bind = $bind
+         | .gateway.controlUi.enabled = false
          | .gateway.http.endpoints.chatCompletions.enabled = true
          | .env.OPENROUTER_API_KEY = $or_key
          | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
