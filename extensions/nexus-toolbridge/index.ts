@@ -5,17 +5,17 @@ import crypto from "node:crypto";
 function normalizeBaseUrl(input: string | undefined | null): string {
   const raw = String(input ?? "").trim();
   if (!raw) return "";
-  
+
   // Remove trailing slashes
   let url = raw.replace(/\/+$/, "");
-  
+
   // Ensure protocol is present
   if (!/^https?:\/\//i.test(url)) {
     // Check if it's a local address
     const isLocal = url.includes('localhost') || url.includes('127.0.0.1') || url.includes('host.docker.internal');
     url = (isLocal ? "http://" : "https://") + url;
   }
-  
+
   // Validate URL format
   try {
     new URL(url);
@@ -25,7 +25,7 @@ function normalizeBaseUrl(input: string | undefined | null): string {
     // Return a safe default if URL is invalid
     return "https://napi.marcoby.net";
   }
-  
+
   return url;
 }
 
@@ -122,7 +122,7 @@ async function callNexusTool(params: {
       params.api.logger.error(`[nexus-toolbridge] Failed to parse JSON response: ${e.message}`);
       return {};
     });
-    
+
     if (!response.ok) {
       const errMsg =
         (payload && typeof payload === "object" && "error" in payload && (payload as any).error) ||
@@ -189,22 +189,18 @@ const nexusToolbridgePlugin = {
       return [
         makeTool("nexus_m365_capabilities", "Show Microsoft 365 capability availability for this user, including missing scopes and which tools are usable now.", {
           type: "object",
-          additionalProperties: false,
           properties: {},
         }),
         makeTool("nexus_get_user_identity_context", "Fetch structured onboarding identity context for this Nexus user.", {
           type: "object",
-          additionalProperties: false,
           properties: {},
         }),
         makeTool("nexus_get_integration_status", "Get current integration status for the signed-in Nexus user.", {
           type: "object",
-          additionalProperties: false,
           properties: {},
         }),
         makeTool("nexus_resolve_email_provider", "Resolve email provider from MX records (Microsoft 365 vs Google Workspace).", {
           type: "object",
-          additionalProperties: false,
           required: ["email"],
           properties: {
             email: { type: "string" },
@@ -212,7 +208,6 @@ const nexusToolbridgePlugin = {
         }),
         makeTool("nexus_start_email_connection", "Start OAuth connection flow for an email provider.", {
           type: "object",
-          additionalProperties: false,
           required: ["provider"],
           properties: {
             provider: { type: "string", description: 'Provider slug, e.g. "microsoft" or "google-workspace".' },
@@ -221,7 +216,6 @@ const nexusToolbridgePlugin = {
         }),
         makeTool("nexus_connect_imap", "Connect an IMAP inbox using host/port credentials (fallback when OAuth is unavailable).", {
           type: "object",
-          additionalProperties: false,
           required: ["email", "host", "port", "username", "password"],
           properties: {
             email: { type: "string" },
@@ -235,7 +229,6 @@ const nexusToolbridgePlugin = {
         }),
         makeTool("nexus_test_integration_connection", "Test saved OAuth connection health for a provider.", {
           type: "object",
-          additionalProperties: false,
           required: ["provider"],
           properties: {
             provider: { type: "string" },
@@ -243,15 +236,12 @@ const nexusToolbridgePlugin = {
         }),
         makeTool("nexus_search_emails", "Search connected inbox emails by date range, sender(s), and free-text query.", {
           type: "object",
-          additionalProperties: false,
           properties: {
             provider: { type: "string", description: '"auto", "all", "microsoft", or "google-workspace".' },
             datePreset: { type: "string" },
             startDate: { type: "string" },
             endDate: { type: "string" },
-            from: {
-              oneOf: [{ type: "string" }, { type: "array", items: { type: "string" } }],
-            },
+            from: { type: "string" },
             query: { type: "string" },
             unreadOnly: { type: "boolean" },
             limit: { type: "number" },
@@ -260,7 +250,6 @@ const nexusToolbridgePlugin = {
         }),
         makeTool("nexus_send_email", "Send an email to specific recipients with a subject, body, and optional CC, BCC, and attachments.", {
           type: "object",
-          additionalProperties: false,
           required: ["to", "subject", "body"],
           properties: {
             provider: { type: "string", enum: ["auto", "microsoft", "google-workspace"], description: "The email provider to use. Defaults to 'auto'." },
@@ -285,7 +274,6 @@ const nexusToolbridgePlugin = {
         }),
         makeTool("nexus_get_calendar_events", "Fetch upcoming calendar events for a specific date range.", {
           type: "object",
-          additionalProperties: false,
           properties: {
             provider: { type: "string", enum: ["auto", "microsoft", "google-workspace"] },
             datePreset: { type: "string", enum: ["today", "last_7_days", "last_30_days", "this_week", "last_week", "this_month", "last_month", "custom"] },
@@ -297,7 +285,6 @@ const nexusToolbridgePlugin = {
         }),
         makeTool("nexus_disconnect_integration", "Disconnect an integration by ID or provider.", {
           type: "object",
-          additionalProperties: false,
           properties: {
             integrationId: { type: "string" },
             provider: { type: "string" },
@@ -305,12 +292,10 @@ const nexusToolbridgePlugin = {
         }),
         makeTool("nexus_list_files", "List all files in the current user's workspace.", {
           type: "object",
-          additionalProperties: false,
           properties: {},
         }),
         makeTool("nexus_read_file", "Read the contents of a file from the user's workspace.", {
           type: "object",
-          additionalProperties: false,
           required: ["filename"],
           properties: {
             filename: { type: "string", description: "Name of the file to read" },
@@ -318,7 +303,6 @@ const nexusToolbridgePlugin = {
         }),
         makeTool("nexus_write_file", "Create or overwrite a file in the user's workspace.", {
           type: "object",
-          additionalProperties: false,
           required: ["filename", "content"],
           properties: {
             filename: { type: "string", description: "Name of the file to create" },
@@ -328,7 +312,6 @@ const nexusToolbridgePlugin = {
         }),
         makeTool("create_integration_from_url", "Create a new Specialized Agent and Tool Integration by reading API documentation from a URL.", {
           type: "object",
-          additionalProperties: false,
           required: ["url"],
           properties: {
             url: { type: "string", description: "URL of the API documentation" },
@@ -337,7 +320,6 @@ const nexusToolbridgePlugin = {
         }),
         makeTool("nexus_generate_image", "Generate high-quality images and illustrations. Images are saved to your workspace.", {
           type: "object",
-          additionalProperties: false,
           required: ["prompt"],
           properties: {
             prompt: { type: "string", description: "Detailed description of the image to generate" },
