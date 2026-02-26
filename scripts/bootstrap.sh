@@ -330,8 +330,8 @@ if [ -f "$CONFIG_FILE" ]; then
     fi
     
     # 2. Apply Overrides
-    # Default to OpenRouter DeepSeek V3.2 if no primary model specified
-    jq --arg model "${OPENCLAW_AGENTS_DEFAULTS_MODEL_PRIMARY:-openrouter/deepseek/deepseek-v3.2}" \
+    # Default to OpenRouter Google Gemini if no primary model specified
+    jq --arg model "${OPENCLAW_AGENTS_DEFAULTS_MODEL_PRIMARY:-google/gemini-2.0-flash}" \
        --arg fallbacks "$FINAL_FALLBACKS" \
        --arg token "${OPENCLAW_GATEWAY_TOKEN:-sk-openclaw-local}" \
        --arg port "${OPENCLAW_GATEWAY_PORT:-18790}" \
@@ -348,17 +348,16 @@ if [ -f "$CONFIG_FILE" ]; then
              (base | map(select(. != "nexus_*")) | unique)
            end;
          
-         # 🛠️ Selective Model Enforcement (v0.8.1)
-         # Only overwrite the primary model/fallbacks if they are missing OR FORCE_MODEL_DEFAULTS=1
+         # 🛠️ Selective Model Enforcement (v0.8.2)
+         # Soft Update: Only overwrite key fields if they are missing OR FORCE_MODEL_DEFAULTS=1
          (if (.agents.defaults.model == null or $force_defaults == "1") then
             .agents.defaults.model = { "primary": $model, "fallbacks": (if ($fallbacks | fromjson?) then ($fallbacks | fromjson) else [] end) }
           else . end)
+         | (if (.env.OPENROUTER_API_KEY == null or $force_defaults == "1") then .env.OPENROUTER_API_KEY = $or_key else . end)
          | .gateway.auth.token = $token
          | .gateway.port = ($port|tonumber)
          | .gateway.bind = $bind
-         | .gateway.controlUi.enabled = false
-         | .gateway.http.endpoints.chatCompletions.enabled = true
-         | .env.OPENROUTER_API_KEY = $or_key
+         | .gateway.http.endpoints.responses.enabled = true
          | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
          | .plugins.allow = ["whatsapp", "telegram", "nexus-toolbridge"]
          | del(.plugins.entries."google-antigravity-auth")
@@ -393,7 +392,7 @@ if [ -f "$CONFIG_FILE" ]; then
              | map(
                  if .id == "main" then
                    # Tier 1: Executive Brain - Orchestration only.
-                   .tools = { "profile": "minimal", "allow": ["group:sessions"] }
+                   .tools = { "profile": "minimal", "allow": ["group:sessions", "group:messaging"] }
                  elif .id == "nexus" then
                    # Tier 2: Business Agent - nexus_* + intelligence only, no exec/sandbox.
                    {
@@ -403,7 +402,7 @@ if [ -f "$CONFIG_FILE" ]; then
                      "sandbox": { "mode": "off" },
                      "tools": { 
                        "profile": "minimal", 
-                       "allow": with_or_without_nexus_tool(["browser", "web_search", "advanced_scrape"]) 
+                       "allow": with_or_without_nexus_tool(["browser", "web_search", "advanced_scrape", "group:messaging"]) 
                      }
                    }
                  else .
@@ -418,7 +417,7 @@ if [ -f "$CONFIG_FILE" ]; then
                    "sandbox": { "mode": "off" },
                    "tools": { 
                      "profile": "minimal", 
-                     "allow": with_or_without_nexus_tool(["browser", "web_search", "advanced_scrape"]) 
+                     "allow": with_or_without_nexus_tool(["browser", "web_search", "advanced_scrape", "group:messaging"]) 
                    }
                  }
                ] end

@@ -57,7 +57,7 @@ services:
       - bash
       - /app/scripts/bootstrap.sh
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:18790/" ]
+      test: [ "CMD", "nc", "-z", "localhost", "18790" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -92,7 +92,9 @@ services:
       retries: 5
 
   searxng:
-    image: 'searxng/searxng:latest'
+    build:
+      context: .
+      dockerfile: searxng/Dockerfile
     restart: unless-stopped
     networks:
       - coolify
