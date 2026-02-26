@@ -47,7 +47,7 @@ services:
       OPENCLAW_BETA: '${OPENCLAW_BETA:-false}'
     volumes:
       - 'openclaw-data:/data'
-      - 'openclaw-workspace:/root/openclaw-workspace'
+      - 'openclaw-workspace:/data/openclaw-workspace'
     ports:
       - '18790:18790'
     depends_on:
@@ -79,12 +79,12 @@ services:
       - VERSION=1
       - EXEC=1
       - EVENTS=1
-      - BUILD: 1
-      - PULL: 1
-      - TIMEOUT_CONNECT: 5000
-      - TIMEOUT_CLIENT: 120000
-      - TIMEOUT_SERVER: 120000
-      - TIMEOUT_TUNNEL: 120000
+      - BUILD=1
+      - PULL=1
+      - TIMEOUT_CONNECT=5000
+      - TIMEOUT_CLIENT=120000
+      - TIMEOUT_SERVER=120000
+      - TIMEOUT_TUNNEL=120000
     healthcheck:
       test: [ "CMD", "nc", "-z", "localhost", "2375" ]
       interval: 10s
@@ -92,9 +92,7 @@ services:
       retries: 5
 
   searxng:
-    build:
-      context: .
-      dockerfile: searxng/Dockerfile
+    image: 'searxng/searxng:latest'
     restart: unless-stopped
     networks:
       - coolify
