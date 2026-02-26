@@ -1,4 +1,15 @@
 services:
+  registry:
+    image: 'registry:2@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373'
+    restart: unless-stopped
+    networks:
+      - coolify
+    volumes:
+      - 'registry-data:/var/lib/registry'
+      - 'registry-auth:/etc/docker/registry'
+    environment:
+      REGISTRY_HTTP_SECRET: '${SERVICE_BASE64_REGISTRY:-nexus-registry-secret}'
+
   openclaw:
     image: "${OPENCLAW_IMAGE:-ghcr.io/marcoby-dev-ops/openclaw-coolify:2026.2.24}"
     restart: 'on-failure:10'
@@ -68,16 +79,36 @@ services:
       - VERSION=1
       - EXEC=1
       - EVENTS=1
-      - BUILD=1
-      - PULL=1
-      - TIMEOUT_CONNECT=5s
-      - TIMEOUT_CLIENT=2m
-      - TIMEOUT_SERVER=2m
+      - BUILD: 1
+      - PULL: 1
+      - TIMEOUT_CONNECT: 5000
+      - TIMEOUT_CLIENT: 120000
+      - TIMEOUT_SERVER: 120000
+      - TIMEOUT_TUNNEL: 120000
     healthcheck:
       test: [ "CMD", "nc", "-z", "localhost", "2375" ]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  searxng:
+    build:
+      context: .
+      dockerfile: searxng/Dockerfile
+    restart: unless-stopped
+    networks:
+      - coolify
+    volumes:
+      - 'searxng-data:/var/lib/searxng'
+    environment:
+      SEARXNG_BASE_URL: 'http://searxng:8080'
+      SEARXNG_SERVER_SECRET_KEY: '${SERVICE_BASE64_SEARXNG:-searxng-secret}'
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
 
 networks:
   coolify:
@@ -86,4 +117,6 @@ networks:
 volumes:
   openclaw-data:
   openclaw-workspace:
+  searxng-data:
   registry-data:
+  registry-auth:

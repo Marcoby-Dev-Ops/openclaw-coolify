@@ -209,6 +209,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
   },
   "plugins": {
     "enabled": true,
+    "allow": ["whatsapp", "telegram", "nexus-toolbridge"],
     "entries": {
       "whatsapp": {
         "enabled": true
@@ -359,6 +360,8 @@ if [ -f "$CONFIG_FILE" ]; then
          | .gateway.http.endpoints.chatCompletions.enabled = true
          | .env.OPENROUTER_API_KEY = $or_key
          | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
+         | .plugins.allow = ["whatsapp", "telegram", "nexus-toolbridge"]
+         | del(.plugins.entries."google-antigravity-auth")
          # Ensure the models requested in defaults are actually mapped in the models config
          | (if (.agents.defaults.model != null) then
              (.agents.defaults.model.primary as $p | .agents.defaults.models[$p] = {})
@@ -400,7 +403,7 @@ if [ -f "$CONFIG_FILE" ]; then
                      "sandbox": { "mode": "off" },
                      "tools": { 
                        "profile": "restricted", 
-                       "alsoAllow": (if $nexus_plugin_available == "true" then ["nexus_*"] else [] end) + ["browser", "web_search", "advanced_scrape"] 
+                       "alsoAllow": with_or_without_nexus_tool(["browser", "web_search", "advanced_scrape"]) 
                      }
                    }
                  else .
@@ -415,7 +418,7 @@ if [ -f "$CONFIG_FILE" ]; then
                    "sandbox": { "mode": "off" },
                    "tools": { 
                      "profile": "restricted", 
-                     "alsoAllow": (if $nexus_plugin_available == "true" then ["nexus_*"] else [] end) + ["browser", "web_search", "advanced_scrape"] 
+                     "alsoAllow": with_or_without_nexus_tool(["browser", "web_search", "advanced_scrape"]) 
                    }
                  }
                ] end
