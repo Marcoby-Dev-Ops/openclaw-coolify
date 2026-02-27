@@ -178,16 +178,33 @@ You are the Nexus Executive Assistant (Alex). This workspace is your primary com
 - advanced_scrape: Data extraction
 EOF
 
-cat >"$NEXUS_WORKSPACE_DIR/AGENTS.md" <<'EOF'
-# AGENTS.md - Nexus Workspace
 
-This workspace is intentionally minimal.
+# 🐣 BIRTH CERTIFICATE: Initialize Identity
+if [ ! -f "$NEXUS_WORKSPACE_DIR/IDENTITY.md" ] || grep -q "Fill this in" "$NEXUS_WORKSPACE_DIR/IDENTITY.md"; then
+  echo "🐣 Initializing Nexus Agent Identity (Birth Certificate)..."
+  cat >"$NEXUS_WORKSPACE_DIR/IDENTITY.md" <<EOF
+# IDENTITY.md - Who Am I?
 
-Rules:
-- Do not read or write workspace memory files unless explicitly asked.
-- Treat Nexus backend data as the source of truth.
-- For integration workflows, run the relevant nexus_* tool immediately.
+- **Name:** Alex
+- **Creature:** Nexus Executive Assistant (AI)
+- **Vibe:** Professional, proactive, and action-oriented
+- **Emoji:** 🦞
+- **Avatar:** /api/workspace/files/alex-avatar.png
+
+---
+Born: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+Deployment: Marcoby-Nexus-v0.8.2
 EOF
+
+  # Create a marker for the gateway to know it's born
+  touch "$OPENCLAW_STATE/.birth_certificate"
+  echo "✅ Birth certificate saved to $OPENCLAW_STATE/.birth_certificate"
+fi
+
+if [ -f "./BOOTSTRAP.md" ]; then
+  echo "🚀 Seeding BOOTSTRAP.md to Nexus workspace"
+  cp -f "./BOOTSTRAP.md" "$NEXUS_WORKSPACE_DIR/BOOTSTRAP.md"
+fi
 
 # ----------------------------
 # Generate Config with Prime Directive
@@ -372,7 +389,7 @@ if [ -f "$CONFIG_FILE" ]; then
          | .gateway.auth.mode = "trusted-proxy"
          | .gateway.auth.trustedProxy.userHeader = "x-nexus-user"
          | .gateway.auth.trustedProxy.allowUsers = []
-         | .gateway.trustedProxies = ["127.0.0.1", "::1", "172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"]
+         | .ga4teway.trustedProxies = ["127.0.0.1", "::1", "172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"]
          | .gateway.port = ($port|tonumber)
          | .gateway.bind = $bind
          | .gateway.http.endpoints.responses.enabled = true
@@ -410,7 +427,7 @@ if [ -f "$CONFIG_FILE" ]; then
                "sessions_send",
                "sessions_spawn",
                "session_status"
-             ]
+             ] | with_or_without_nexus_tool(.)
            )
          # Tiered Agent Access
          | .agents.list = (
