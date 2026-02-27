@@ -365,6 +365,15 @@ if [ -f "$CONFIG_FILE" ]; then
          (if (.agents.defaults.model == null or $force_defaults == "1") then
             .agents.defaults.model = { "primary": $model, "fallbacks": (if ($fallbacks | fromjson?) then ($fallbacks | fromjson) else [] end) }
           else . end)
+         # Strip google-antigravity models unconditionally — they require OAuth that Nexus controls.
+         # If primary is a google-antigravity model, replace with the configured default.
+         | (if (.agents.defaults.model.primary | tostring | startswith("google-antigravity")) then
+             .agents.defaults.model.primary = $model
+           else . end)
+         | .agents.defaults.model.fallbacks = (
+             (.agents.defaults.model.fallbacks // []) |
+             map(select((. | tostring | startswith("google-antigravity")) | not))
+           )
          | (if (.env.OPENROUTER_API_KEY == null or $force_defaults == "1") then .env.OPENROUTER_API_KEY = $or_key else . end)
          | .gateway.auth.mode = "trusted-proxy"
          | .gateway.auth.trustedProxy.userHeader = "x-nexus-user"
@@ -420,16 +429,15 @@ if [ -f "$CONFIG_FILE" ]; then
                    # Tier 1: Executive Brain - Orchestration only.
                    .tools = { "profile": "minimal", "allow": ["group:sessions", "group:messaging"] }
                  elif .id == "nexus" then
-                   # Tier 2: Business Agent - nexus_* + intelligence only, no exec/sandbox.
+                   # Tier 2: Business Agent - full tool profile so plugin-registered nexus_* tools are included.
+                   # Using profile:"full" avoids the timing issue where the nexus-toolbridge plugin
+                   # registers tools lazily (per-session) AFTER the allowlist is evaluated.
                    {
                      "id": "nexus",
                      "name": "Nexus Assistant",
                      "workspace": $nexus_workspace,
-                     "sandbox": { "mode": "off" },
-                     "tools": { 
-                       "profile": "minimal", 
-                       "allow": with_or_without_nexus_tool(["browser", "web_search", "advanced_scrape", "group:messaging"]) 
-                     }
+                     "sandbox": { "mode": "non-main", "scope": "session" },
+                     "tools": { "profile": "full" }
                    }
                  else .
                  end
@@ -440,11 +448,8 @@ if [ -f "$CONFIG_FILE" ]; then
                    "id": "nexus",
                    "name": "Nexus Assistant",
                    "workspace": $nexus_workspace,
-                   "sandbox": { "mode": "off" },
-                   "tools": { 
-                     "profile": "minimal", 
-                     "allow": with_or_without_nexus_tool(["browser", "web_search", "advanced_scrape", "group:messaging"]) 
-                   }
+                   "sandbox": { "mode": "non-main", "scope": "session" },
+                   "tools": { "profile": "full" }
                  }
                ] end
            )
