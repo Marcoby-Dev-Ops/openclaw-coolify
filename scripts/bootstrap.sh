@@ -218,16 +218,12 @@ if [ ! -f "$CONFIG_FILE" ]; then
         "enabled": false
       },
       "nexus-toolbridge": {
-        "enabled": true,
-        "install": "/data/.openclaw/extensions/nexus-toolbridge"
+        "enabled": true
       }
     }
   },
   "skills": {
     "allowBundled": [
-      "*"
-    ],
-    "allow": [
       "*"
     ],
     "install": {
@@ -289,9 +285,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
       },
       "maxConcurrent": 4,
       "memorySearch": {
-        "enabled": true,
-        "provider": "openrouter",
-        "model": "openai/text-embedding-3-small"
+        "enabled": true
       },
       "sandbox": {
         "mode": "non-main",
@@ -384,17 +378,14 @@ if [ -f "$CONFIG_FILE" ]; then
          | .gateway.http.endpoints.responses.enabled = true
          | .gateway.auth.token = $token
          | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
-         | .plugins.entries."nexus-toolbridge".install = "/data/.openclaw/extensions/nexus-toolbridge"
+         | .plugins.load.paths = ["/data/.openclaw/extensions/nexus-toolbridge"]
          | .plugins.allow = ["nexus-toolbridge"]
          | .plugins.entries.whatsapp.enabled = false
          | .plugins.entries.telegram.enabled = false
          | del(.plugins.entries."google-antigravity-auth")
-         # Memory Search with OpenRouter embeddings
+         # Memory Search (enabled only; provider/model are managed by openclaw internally)
          | .agents.defaults.memorySearch.enabled = true
-         | .agents.defaults.memorySearch.provider = "openrouter"
-         | .agents.defaults.memorySearch.model = "openai/text-embedding-3-small"
          # Skills allowlist - allow all bundled skills
-         | .skills.allow = ["*"]
          | .skills.allowBundled = ["*"]
          # Ensure the models requested in defaults are actually mapped in the models config
          | (if (.agents.defaults.model != null) then
