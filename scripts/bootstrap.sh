@@ -209,16 +209,17 @@ if [ ! -f "$CONFIG_FILE" ]; then
   },
   "plugins": {
     "enabled": true,
-    "allow": ["whatsapp", "telegram", "nexus-toolbridge"],
+    "allow": ["nexus-toolbridge"],
     "entries": {
       "whatsapp": {
-        "enabled": true
+        "enabled": false
       },
       "telegram": {
-        "enabled": true
+        "enabled": false
       },
       "nexus-toolbridge": {
-        "enabled": true
+        "enabled": true,
+        "install": "/data/.openclaw/extensions/nexus-toolbridge"
       }
     }
   },
@@ -226,9 +227,15 @@ if [ ! -f "$CONFIG_FILE" ]; then
     "allowBundled": [
       "*"
     ],
+    "allow": [
+      "*"
+    ],
     "install": {
       "nodeManager": "npm"
     }
+  },
+  "memory": {
+    "slotPlugin": "memory-core"
   },
   "gateway": {
   "port": $OPENCLAW_GATEWAY_PORT,
@@ -281,6 +288,11 @@ if [ ! -f "$CONFIG_FILE" ]; then
         "every": "1h"
       },
       "maxConcurrent": 4,
+      "memorySearch": {
+        "enabled": true,
+        "provider": "openrouter",
+        "model": "openai/text-embedding-3-small"
+      },
       "sandbox": {
         "mode": "non-main",
         "scope": "session",
@@ -363,8 +375,18 @@ if [ -f "$CONFIG_FILE" ]; then
          | .gateway.http.endpoints.responses.enabled = true
          | .gateway.auth.token = $token
          | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
-         | .plugins.allow = ["whatsapp", "telegram", "nexus-toolbridge"]
+         | .plugins.entries."nexus-toolbridge".install = "/data/.openclaw/extensions/nexus-toolbridge"
+         | .plugins.allow = ["nexus-toolbridge"]
+         | .plugins.entries.whatsapp.enabled = false
+         | .plugins.entries.telegram.enabled = false
          | del(.plugins.entries."google-antigravity-auth")
+         # Memory Search with OpenRouter embeddings
+         | .agents.defaults.memorySearch.enabled = true
+         | .agents.defaults.memorySearch.provider = "openrouter"
+         | .agents.defaults.memorySearch.model = "openai/text-embedding-3-small"
+         # Skills allowlist - allow all bundled skills
+         | .skills.allow = ["*"]
+         | .skills.allowBundled = ["*"]
          # Ensure the models requested in defaults are actually mapped in the models config
          | (if (.agents.defaults.model != null) then
              (.agents.defaults.model.primary as $p | .agents.defaults.models[$p] = {})
