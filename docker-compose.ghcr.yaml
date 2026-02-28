@@ -11,7 +11,10 @@ services:
       REGISTRY_HTTP_SECRET: '${SERVICE_BASE64_REGISTRY:-nexus-registry-secret}'
 
   openclaw:
-    image: "${OPENCLAW_IMAGE:-ghcr.io/marcoby-dev-ops/openclaw-coolify:latest}"
+    # Simple channel/tag-based deployment that matches npm dist-tags.
+    # Defaults to `latest`, but always pulls so mutable tags do not reuse stale local images.
+    image: 'ghcr.io/marcoby-dev-ops/openclaw-coolify:${OPENCLAW_TAG:-latest}'
+    pull_policy: always
     restart: 'on-failure:10'
     networks:
       - coolify
