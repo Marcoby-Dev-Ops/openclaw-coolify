@@ -389,9 +389,12 @@ if [ -f "$CONFIG_FILE" ]; then
          | .gateway.auth.mode = "trusted-proxy"
          | .gateway.auth.trustedProxy.userHeader = "x-nexus-user"
          | .gateway.auth.trustedProxy.allowUsers = []
+         | .gateway.mode = "local"
          | .gateway.trustedProxies = ["127.0.0.1", "::1", "172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"]
          | .gateway.port = ($port|tonumber)
          | .gateway.bind = $bind
+         | .gateway.controlUi.enabled = false
+         | .gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback = true
          | .gateway.http.endpoints.responses.enabled = true
          | .gateway.auth.token = $token
          | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
