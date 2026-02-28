@@ -313,8 +313,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
       }
     },
     "list": [
-      { "id": "main","default": true, "name": "default",  "workspace": "${OPENCLAW_WORKSPACE:-/data/openclaw-workspace}"},
-      { "id": "nexus", "name": "Nexus Assistant", "workspace": "$NEXUS_WORKSPACE_DIR", "sandbox": { "mode": "off" }, "tools": { "profile": "minimal", "allow": ["nexus_*"] } }
+      { "id": "main", "name": "default", "workspace": "${OPENCLAW_WORKSPACE:-/data/openclaw-workspace}"},
+      { "id": "nexus", "default": true, "name": "Nexus Assistant", "workspace": "$NEXUS_WORKSPACE_DIR", "sandbox": { "mode": "off" }, "tools": { "profile": "minimal", "allow": ["nexus_*"] } }
     ]
   }
 }
@@ -435,13 +435,15 @@ if [ -f "$CONFIG_FILE" ]; then
              | map(
                  if .id == "main" then
                    # Tier 1: Executive Brain - Orchestration only.
-                   .tools = { "profile": "minimal", "allow": ["group:sessions", "group:messaging"] }
+                   .default = false
+                   | .tools = { "profile": "minimal", "allow": ["group:sessions", "group:messaging"] }
                  elif .id == "nexus" then
                    # Tier 2: Business Agent - full tool profile so plugin-registered nexus_* tools are included.
                    # Using profile:"full" avoids the timing issue where the nexus-toolbridge plugin
                    # registers tools lazily (per-session) AFTER the allowlist is evaluated.
                    {
                      "id": "nexus",
+                     "default": true,
                      "name": "Nexus Assistant",
                      "workspace": $nexus_workspace,
                      "sandbox": { "mode": "non-main", "scope": "session" },
@@ -454,6 +456,7 @@ if [ -f "$CONFIG_FILE" ]; then
              | if any(.[]; .id == "nexus") then . else . + [
                  {
                    "id": "nexus",
+                   "default": true,
                    "name": "Nexus Assistant",
                    "workspace": $nexus_workspace,
                    "sandbox": { "mode": "non-main", "scope": "session" },
