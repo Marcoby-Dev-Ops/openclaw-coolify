@@ -386,7 +386,7 @@ if [ -f "$CONFIG_FILE" ]; then
              map(select((. | tostring | startswith("google-antigravity")) | not))
            )
          | (if (.env.OPENROUTER_API_KEY == null or $force_defaults == "1") then .env.OPENROUTER_API_KEY = $or_key else . end)
-         | .gateway.auth.mode = "trusted-proxy"
+         | .gateway.auth.mode = "token"
          | .gateway.auth.trustedProxy.userHeader = "x-nexus-user"
          | .gateway.auth.trustedProxy.allowUsers = []
          | .gateway.mode = "local"
@@ -394,7 +394,9 @@ if [ -f "$CONFIG_FILE" ]; then
          | .gateway.port = ($port|tonumber)
          | .gateway.bind = $bind
          | .gateway.controlUi.enabled = false
-         | .gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback = true
+         | .gateway.controlUi.allowedOrigins = ["*"]
+         | .gateway.controlUi.allowInsecureAuth = true
+         | .gateway.http.endpoints.chatCompletions.enabled = true
          | .gateway.http.endpoints.responses.enabled = true
          | .gateway.auth.token = $token
          | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
