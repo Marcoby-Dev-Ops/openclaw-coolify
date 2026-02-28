@@ -11,7 +11,7 @@ services:
       REGISTRY_HTTP_SECRET: '${SERVICE_BASE64_REGISTRY:-nexus-registry-secret}'
 
   openclaw:
-    image: "${OPENCLAW_IMAGE:-ghcr.io/marcoby-dev-ops/openclaw-coolify:2026.2.24}"
+    image: "${OPENCLAW_IMAGE:-ghcr.io/marcoby-dev-ops/openclaw-coolify:latest}"
     restart: 'on-failure:10'
     networks:
       - coolify
