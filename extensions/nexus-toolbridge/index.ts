@@ -51,7 +51,6 @@ function normalizeBaseUrl(input: string | undefined | null): string {
     return "https://napp.marcoby.net";
   }
 
-  console.log(`[nexus-toolbridge] Normalized URL: ${url}`);
   return url;
 }
 
