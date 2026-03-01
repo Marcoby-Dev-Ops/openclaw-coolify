@@ -49,7 +49,8 @@ Best current local stack. Load MiniMax M2.1 in LM Studio, enable the local serve
 ```
 
 **Setup checklist**
-- Install LM Studio: https://lmstudio.ai
+
+- Install LM Studio: <https://lmstudio.ai>
 - In LM Studio, download the **largest MiniMax M2.1 build available** (avoid “small”/heavily quantized variants), start the server, confirm `http://127.0.0.1:1234/v1/models` lists it.
 - Keep the model loaded; cold-load adds startup latency.
 - Adjust `contextWindow`/`maxTokens` if your LM Studio build differs.
@@ -140,6 +141,7 @@ vLLM, LiteLLM, OAI-proxy, or custom gateways work if they expose an OpenAI-style
 Keep `models.mode: "merge"` so hosted models stay available as fallbacks.
 
 ## Troubleshooting
+
 - Gateway can reach the proxy? `curl http://127.0.0.1:1234/v1/models`.
 - LM Studio model unloaded? Reload; cold start is a common “hanging” cause.
 - Context errors? Lower `contextWindow` or raise your server limit.

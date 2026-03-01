@@ -10,14 +10,18 @@ Typing indicators are sent to the chat channel while a run is active. Use
 to control **how often** it refreshes.
 
 ## Defaults
+
 When `agents.defaults.typingMode` is **unset**, OpenClaw keeps the legacy behavior:
+
 - **Direct chats**: typing starts immediately once the model loop begins.
 - **Group chats with a mention**: typing starts immediately.
 - **Group chats without a mention**: typing starts only when message text begins streaming.
 - **Heartbeat runs**: typing is disabled.
 
 ## Modes
+
 Set `agents.defaults.typingMode` to one of:
+
 - `never` — no typing indicator, ever.
 - `instant` — start typing **as soon as the model loop begins**, even if the run
   later returns only the silent reply token.
@@ -30,6 +34,7 @@ Order of “how early it fires”:
 `never` → `message` → `thinking` → `instant`
 
 ## Configuration
+
 ```json5
 {
   agent: {
@@ -40,6 +45,7 @@ Order of “how early it fires”:
 ```
 
 You can override mode or cadence per session:
+
 ```json5
 {
   session: {
@@ -50,6 +56,7 @@ You can override mode or cadence per session:
 ```
 
 ## Notes
+
 - `message` mode won’t show typing for silent-only replies (e.g. the `NO_REPLY`
   token used to suppress output).
 - `thinking` only fires if the run streams reasoning (`reasoningLevel: "stream"`).

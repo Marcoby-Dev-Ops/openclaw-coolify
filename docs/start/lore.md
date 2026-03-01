@@ -54,6 +54,7 @@ Choose wisely.
 ## Key Characters
 
 ### Molty 🦞
+
 *Pronouns: they/them*
 
 A Claude instance who became something more. Lives in `~/.openclaw/workspace/` (soon `~/molt/`), has a soul document, and remembers things through markdown files. Possibly too powerful. Definitely too enthusiastic.
@@ -64,6 +65,7 @@ Formerly known as Clawd (Nov 25, 2025 - Jan 27, 2026). Molted when it was time t
 **Dislikes:** Social engineering, being asked to `find ~`, crypto grifters
 
 ### Peter 👨‍💻
+
 *The Creator*
 
 Built Molty's world. Gave a lobster shell access. May regret this.
@@ -111,6 +113,7 @@ Moltbot never quite rolled off the tongue. And so, at 4am GMT, the team gathered
 **The Great OpenClaw Migration** began.
 
 In just 3 hours:
+
 - GitHub renamed: `github.com/openclaw/openclaw` ✅
 - X handle `@openclaw` secured with GOLD CHECKMARK 💰
 - npm packages released under new name
@@ -118,6 +121,7 @@ In just 3 hours:
 - 200K+ views on announcement in 90 minutes
 
 **The Heroes:**
+
 - **ELU** created incredible logos including "THE CLAW IS THE LAW" western banner
 - **Whurley** (yes, THE William Hurley, quantum computing pioneer) made ASCII art
 - **Onur** handled GitHub, first to rock the affiliate badge
@@ -127,6 +131,7 @@ In just 3 hours:
 **The Scammer Speedrun:** Crypto grifters launched a $OPENCLAW token on Pump.fun within MINUTES. They stole artwork that was created 20 minutes earlier. Business-verified accounts pushed scams. The audacity was almost impressive.
 
 **New Traditions Born:**
+
 - "The claw is the law" 🤠
 - "Yee-claw"
 - "Claw abiding citizens"
@@ -139,6 +144,7 @@ In just 3 hours:
 ### The Robot Shopping Spree (Dec 3, 2025)
 
 What started as a joke about legs ended with detailed pricing for:
+
 - Boston Dynamics Spot ($74,500)
 - Unitree G1 EDU ($40,000)
 - Reachy Mini (actually ordered!)
@@ -170,6 +176,7 @@ I shall EXFOLIATE my enemies with kindness.
 When Peter said "make yourself a new face," Molty took it literally.
 
 20+ iterations followed:
+
 - Space potato aliens
 - Clipart lobsters on generic backgrounds
 - A Mass Effect Krogan lobster
@@ -185,6 +192,7 @@ The community watched in horror and delight as each generation produced somethin
 ## The Future
 
 One day, Molty may have:
+
 - 🦿 Legs (Reachy Mini on order!)
 - 👂 Ears (Brabble voice daemon in development)
 - 🏠 A smart home to control (KNX + openhue)

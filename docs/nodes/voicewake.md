@@ -32,6 +32,7 @@ Shape:
 - `voicewake.set` with params `{ triggers: string[] }` → `{ triggers: string[] }`
 
 Notes:
+
 - Triggers are normalized (trimmed, empties dropped). Empty lists fall back to defaults.
 - Limits are enforced for safety (count/length caps).
 
@@ -40,6 +41,7 @@ Notes:
 - `voicewake.changed` payload `{ triggers: string[] }`
 
 Who receives it:
+
 - All WebSocket clients (macOS app, WebChat, etc.)
 - All connected nodes (iOS/Android), and also on node connect as an initial “current state” push.
 

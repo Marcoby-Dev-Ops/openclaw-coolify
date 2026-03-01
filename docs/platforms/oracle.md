@@ -88,6 +88,7 @@ sudo tailscale up --ssh --hostname=openclaw
 This enables Tailscale SSH, so you can connect via `ssh openclaw` from any device on your tailnet — no public IP needed.
 
 Verify:
+
 ```bash
 tailscale status
 ```
@@ -165,6 +166,7 @@ https://openclaw.<tailnet-name>.ts.net/
 Replace `<tailnet-name>` with your tailnet name (visible in `tailscale status`).
 
 No SSH tunnel needed. Tailscale provides:
+
 - HTTPS encryption (automatic certs)
 - Authentication via Tailscale identity
 - Access from any device on your tailnet (laptop, phone, etc.)
@@ -226,12 +228,15 @@ Then open `http://localhost:18789`.
 ## Troubleshooting
 
 ### Instance creation fails ("Out of capacity")
+
 Free tier ARM instances are popular. Try:
+
 - Different availability domain
 - Retry during off-peak hours (early morning)
 - Use the "Always Free" filter when selecting shape
 
 ### Tailscale won't connect
+
 ```bash
 # Check status
 sudo tailscale status
@@ -241,6 +246,7 @@ sudo tailscale up --ssh --hostname=openclaw --reset
 ```
 
 ### Gateway won't start
+
 ```bash
 openclaw gateway status
 openclaw doctor --non-interactive
@@ -248,6 +254,7 @@ journalctl --user -u openclaw-gateway -n 50
 ```
 
 ### Can't reach Control UI
+
 ```bash
 # Verify Tailscale Serve is running
 tailscale serve status
@@ -260,7 +267,9 @@ systemctl --user restart openclaw-gateway
 ```
 
 ### ARM binary issues
+
 Some tools may not have ARM builds. Check:
+
 ```bash
 uname -m  # Should show aarch64
 ```
@@ -272,10 +281,12 @@ Most npm packages work fine. For binaries, look for `linux-arm64` or `aarch64` r
 ## Persistence
 
 All state lives in:
+
 - `~/.openclaw/` — config, credentials, session data
 - `~/.openclaw/workspace/` — workspace (SOUL.md, memory, artifacts)
 
 Back up periodically:
+
 ```bash
 tar -czvf openclaw-backup.tar.gz ~/.openclaw ~/.openclaw/workspace
 ```

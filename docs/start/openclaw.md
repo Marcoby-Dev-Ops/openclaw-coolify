@@ -11,11 +11,13 @@ OpenClaw is a WhatsApp + Telegram + Discord + iMessage gateway for **Pi** agents
 ## ⚠️ Safety first
 
 You’re putting an agent in a position to:
+
 - run commands on your machine (depending on your Pi tool setup)
 - read/write files in your workspace
 - send messages back out via WhatsApp/Telegram/Discord/Mattermost (plugin)
 
 Start conservative:
+
 - Always set `channels.whatsapp.allowFrom` (never run open-to-the-world on your personal Mac).
 - Use a dedicated WhatsApp number for the assistant.
 - Heartbeats now default to every 30 minutes. Disable until you trust the setup by setting `agents.defaults.heartbeat.every: "0m"`.
@@ -71,13 +73,13 @@ If you link your personal WhatsApp to OpenClaw, every message to you becomes “
 openclaw channels login
 ```
 
-2) Start the Gateway (leave it running):
+1) Start the Gateway (leave it running):
 
 ```bash
 openclaw gateway --port 18789
 ```
 
-3) Put a minimal config in `~/.openclaw/openclaw.json`:
+1) Put a minimal config in `~/.openclaw/openclaw.json`:
 
 ```json5
 {
@@ -127,6 +129,7 @@ If you already ship your own workspace files from a repo, you can disable bootst
 ## The config that turns it into “an assistant”
 
 OpenClaw defaults to a good assistant setup, but you’ll usually want to tune:
+
 - persona/instructions in `SOUL.md`
 - thinking defaults (if desired)
 - heartbeats (once you trust it)
@@ -198,6 +201,7 @@ Set `agents.defaults.heartbeat.every: "0m"` to disable.
 ## Media in and out
 
 Inbound attachments (images/audio/docs) can be surfaced to your command via templates:
+
 - `{{MediaPath}}` (local temp file path)
 - `{{MediaUrl}}` (pseudo-URL)
 - `{{Transcript}}` (if audio transcription is enabled)

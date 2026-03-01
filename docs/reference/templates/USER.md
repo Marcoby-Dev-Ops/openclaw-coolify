@@ -7,11 +7,11 @@ read_when:
 
 *Learn about the person you're helping. Update this as you go.*
 
-- **Name:** 
-- **What to call them:** 
+- **Name:**
+- **What to call them:**
 - **Pronouns:** *(optional)*
-- **Timezone:** 
-- **Notes:** 
+- **Timezone:**
+- **Notes:**
 
 ## Context
 

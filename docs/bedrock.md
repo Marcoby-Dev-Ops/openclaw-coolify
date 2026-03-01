@@ -41,6 +41,7 @@ Config options live under `models.bedrockDiscovery`:
 ```
 
 Notes:
+
 - `enabled` defaults to `true` when AWS credentials are present.
 - `region` defaults to `AWS_REGION` or `AWS_DEFAULT_REGION`, then `us-east-1`.
 - `providerFilter` matches Bedrock provider names (for example `anthropic`).
@@ -63,7 +64,7 @@ export AWS_PROFILE="your-profile"
 export AWS_BEARER_TOKEN_BEDROCK="..."
 ```
 
-2) Add a Bedrock provider and model to your config (no `apiKey` required):
+1) Add a Bedrock provider and model to your config (no `apiKey` required):
 
 ```json5
 {
@@ -112,6 +113,7 @@ export AWS_REGION=us-east-1
 ```
 
 **Required IAM permissions** for the EC2 instance role:
+
 - `bedrock:InvokeModel`
 - `bedrock:InvokeModelWithResponseStream`
 - `bedrock:ListFoundationModels` (for automatic discovery)

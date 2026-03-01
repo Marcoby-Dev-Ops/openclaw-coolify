@@ -37,6 +37,7 @@ openclaw sandbox list --json     # JSON output
 ```
 
 **Output includes:**
+
 - Container name and status (running/stopped)
 - Docker image and whether it matches config
 - Age (time since creation)
@@ -56,6 +57,7 @@ openclaw sandbox recreate --all --force        # Skip confirmation
 ```
 
 **Options:**
+
 - `--all`: Recreate all sandbox containers
 - `--session <key>`: Recreate container for specific session
 - `--agent <id>`: Recreate containers for specific agent
@@ -97,7 +99,6 @@ openclaw sandbox recreate --all
 openclaw sandbox recreate --agent family
 ```
 
-
 ### For a specific agent only
 
 ```bash
@@ -108,6 +109,7 @@ openclaw sandbox recreate --agent alfred
 ## Why is this needed?
 
 **Problem:** When you update sandbox Docker images or configuration:
+
 - Existing containers continue running with old settings
 - Containers are only pruned after 24h of inactivity
 - Regularly-used agents keep old containers running indefinitely

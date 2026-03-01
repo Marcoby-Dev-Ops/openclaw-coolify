@@ -7,14 +7,12 @@ read_when:
 
 > *"EXFOLIATE! EXFOLIATE!"* — A space lobster, probably
 
-
 <p align="center">
     <picture>
         <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/openclaw-logo-text-dark.png">
         <img src="https://raw.githubusercontent.com/openclaw/openclaw/main/docs/assets/openclaw-logo-text.png" alt="OpenClaw" width="500">
     </picture>
 </p>
-
 
 <p align="center">
   <strong>Any OS + WhatsApp/Telegram/Discord/iMessage gateway for AI agents (Pi).</strong><br />
@@ -36,7 +34,7 @@ OpenClaw also powers the OpenClaw assistant.
 
 - **New install from zero:** [Getting Started](/start/getting-started)
 - **Guided setup (recommended):** [Wizard](/start/wizard) (`openclaw onboard`)
-- **Open the dashboard (local Gateway):** http://127.0.0.1:18789/ (or http://localhost:18789/)
+- **Open the dashboard (local Gateway):** <http://127.0.0.1:18789/> (or <http://localhost:18789/>)
 
 If the Gateway is running on the same computer, that link opens the browser Control UI
 immediately. If it fails, start the Gateway first: `openclaw gateway`.
@@ -44,7 +42,7 @@ immediately. If it fails, start the Gateway first: `openclaw gateway`.
 ## Dashboard (browser Control UI)
 
 The dashboard is the browser Control UI for chat, config, nodes, sessions, and more.
-Local default: http://127.0.0.1:18789/
+Local default: <http://127.0.0.1:18789/>
 Remote access: [Web surfaces](/web) and [Tailscale](/gateway/tailscale)
 
 <p align="center">
@@ -237,8 +235,8 @@ Example:
 
 ## Core Contributors
 
-- **Maxim Vovshin** (@Hyaxia, 36747317+Hyaxia@users.noreply.github.com) — Blogwatcher skill
-- **Nacho Iacovino** (@nachoiacovino, nacho.iacovino@gmail.com) — Location parsing (Telegram + WhatsApp)
+- **Maxim Vovshin** (@Hyaxia, <36747317+Hyaxia@users.noreply.github.com>) — Blogwatcher skill
+- **Nacho Iacovino** (@nachoiacovino, <nacho.iacovino@gmail.com>) — Location parsing (Telegram + WhatsApp)
 
 ## License
 

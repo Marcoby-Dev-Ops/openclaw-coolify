@@ -80,6 +80,7 @@ To set a default model and thinking level specifically for Gmail hooks, add
 ```
 
 Notes:
+
 - Per-hook `model`/`thinking` in the mapping still overrides these defaults.
 - Fallback order: `hooks.gmail.model` → `agents.defaults.model.fallbacks` → primary (auth/rate-limit/timeouts).
 - If `agents.defaults.models` is set, the Gmail model must be in the allowlist.
@@ -99,6 +100,7 @@ openclaw webhooks gmail setup \
 ```
 
 Defaults:
+
 - Uses Tailscale Funnel for the public push endpoint.
 - Writes `hooks.gmail` config for `openclaw webhooks gmail run`.
 - Enables the Gmail hook preset (`hooks.presets: ["gmail"]`).
@@ -117,6 +119,7 @@ Platform note: on macOS the wizard installs `gcloud`, `gogcli`, and `tailscale`
 via Homebrew; on Linux install them manually first.
 
 Gateway auto-start (recommended):
+
 - When `hooks.enabled=true` and `hooks.gmail.account` is set, the Gateway starts
   `gog gmail watch serve` on boot and auto-renews the watch.
 - Set `OPENCLAW_SKIP_GMAIL_WATCHER=1` to opt out (useful if you run the daemon yourself).
@@ -140,19 +143,19 @@ gcloud config set project <project-id>
 
 Note: Gmail watch requires the Pub/Sub topic to live in the same project as the OAuth client.
 
-2) Enable APIs:
+1) Enable APIs:
 
 ```bash
 gcloud services enable gmail.googleapis.com pubsub.googleapis.com
 ```
 
-3) Create a topic:
+1) Create a topic:
 
 ```bash
 gcloud pubsub topics create gog-gmail-watch
 ```
 
-4) Allow Gmail push to publish:
+1) Allow Gmail push to publish:
 
 ```bash
 gcloud pubsub topics add-iam-policy-binding gog-gmail-watch \
@@ -189,6 +192,7 @@ gog gmail watch serve \
 ```
 
 Notes:
+
 - `--token` protects the push endpoint (`x-gog-token` or `?token=`).
 - `--hook-url` points to OpenClaw `/hooks/gmail` (mapped; isolated run + summary to main).
 - `--include-body` and `--max-bytes` control the body snippet sent to OpenClaw.

@@ -32,7 +32,7 @@ Details: [Plugins](/plugin)
    - Select **Bot Token**
    - Verify scopes `chat:read` and `chat:write` are selected
    - Copy the **Client ID** and **Access Token**
-3) Find your Twitch user ID: https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/
+3) Find your Twitch user ID: <https://www.streamweasels.com/tools/convert-twitch-username-to-user-id/>
 4) Configure the token:
    - Env: `OPENCLAW_TWITCH_ACCESS_TOKEN=...` (default account only)
    - Or config: `channels.twitch.accessToken`
@@ -70,6 +70,7 @@ Minimal config:
 ### Generate credentials
 
 Use [Twitch Token Generator](https://twitchtokengenerator.com/):
+
 - Select **Bot Token**
 - Verify scopes `chat:read` and `chat:write` are selected
 - Copy the **Client ID** and **Access Token**
@@ -79,11 +80,13 @@ No manual app registration needed. Tokens expire after several hours.
 ### Configure the bot
 
 **Env var (default account only):**
+
 ```bash
 OPENCLAW_TWITCH_ACCESS_TOKEN=oauth:abc123...
 ```
 
 **Or config:**
+
 ```json5
 {
   channels: {
@@ -117,7 +120,7 @@ If both env and config are set, config takes precedence.
 
 **Why user IDs?** Usernames can change, allowing impersonation. User IDs are permanent.
 
-Find your Twitch user ID: https://www.streamweasels.com/tools/convert-twitch-username-%20to-user-id/ (Convert your Twitch username to ID)
+Find your Twitch user ID: <https://www.streamweasels.com/tools/convert-twitch-username-%20to-user-id/> (Convert your Twitch username to ID)
 
 ## Token refresh (optional)
 
@@ -258,6 +261,7 @@ openclaw channels status --probe
 ### Token issues
 
 **"Failed to connect" or authentication errors:**
+
 - Verify `accessToken` is the OAuth access token value (typically starts with `oauth:` prefix)
 - Check token has `chat:read` and `chat:write` scopes
 - If using token refresh, verify `clientSecret` and `refreshToken` are set
@@ -265,18 +269,21 @@ openclaw channels status --probe
 ### Token refresh not working
 
 **Check logs for refresh events:**
+
 ```
 Using env token source for mybot
 Access token refreshed for user 123456 (expires in 14400s)
 ```
 
 If you see "token refresh disabled (no refresh token)":
+
 - Ensure `clientSecret` is provided
 - Ensure `refreshToken` is provided
 
 ## Config
 
 **Account config:**
+
 - `username` - Bot username
 - `accessToken` - OAuth access token with `chat:read` and `chat:write`
 - `clientId` - Twitch Client ID (from Token Generator or your app)
@@ -291,6 +298,7 @@ If you see "token refresh disabled (no refresh token)":
 - `requireMention` - Require @mention (default: `true`)
 
 **Provider options:**
+
 - `channels.twitch.enabled` - Enable/disable channel startup
 - `channels.twitch.username` - Bot username (simplified single-account config)
 - `channels.twitch.accessToken` - OAuth access token (simplified single-account config)
@@ -336,6 +344,7 @@ Full example:
 ## Tool actions
 
 The agent can call `twitch` with action:
+
 - `send` - Send a message to a channel
 
 Example:

@@ -50,6 +50,7 @@ Two equivalent ways to set inline env vars (both are non-overriding):
 ```
 
 Env var equivalents:
+
 - `OPENCLAW_LOAD_SHELL_ENV=1`
 - `OPENCLAW_SHELL_ENV_TIMEOUT_MS=15000`
 

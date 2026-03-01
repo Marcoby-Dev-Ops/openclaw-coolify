@@ -48,10 +48,12 @@ When TLS is enabled, discovery TXT records include `bridgeTls=1` plus
 ## Frames
 
 Client → Gateway:
+
 - `req` / `res`: scoped gateway RPC (chat, sessions, config, health, voicewake, skills.bins)
 - `event`: node signals (voice transcript, agent request, chat subscribe, exec lifecycle)
 
 Gateway → Client:
+
 - `invoke` / `invoke-res`: node commands (`canvas.*`, `camera.*`, `screen.record`,
   `location.get`, `sms.send`)
 - `event`: chat updates for subscribed sessions
@@ -65,6 +67,7 @@ Nodes can emit `exec.finished` or `exec.denied` events to surface system.run act
 These are mapped to system events in the gateway. (Legacy nodes may still emit `exec.started`.)
 
 Payload fields (all optional unless noted):
+
 - `sessionKey` (required): agent session to receive the system event.
 - `runId`: unique exec id for grouping.
 - `command`: raw or formatted command string.

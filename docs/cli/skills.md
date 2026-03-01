@@ -10,6 +10,7 @@ read_when:
 Inspect skills (bundled + workspace + managed overrides) and see what’s eligible vs missing requirements.
 
 Related:
+
 - Skills system: [Skills](/tools/skills)
 - Skills config: [Skills config](/tools/skills-config)
 - ClawdHub installs: [ClawdHub](/tools/clawdhub)
@@ -22,4 +23,3 @@ openclaw skills list --eligible
 openclaw skills info <name>
 openclaw skills check
 ```
-

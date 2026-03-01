@@ -22,11 +22,13 @@ Native Linux companion apps are planned. Contributions are welcome if you want t
 Step-by-step VPS guide: [exe.dev](/platforms/exe-dev)
 
 ## Install
+
 - [Getting Started](/start/getting-started)
 - [Install & updates](/install/updating)
 - Optional flows: [Bun (experimental)](/install/bun), [Nix](/install/nix), [Docker](/install/docker)
 
 ## Gateway
+
 - [Gateway runbook](/gateway)
 - [Configuration](/gateway/configuration)
 
@@ -59,6 +61,7 @@ openclaw doctor
 ```
 
 ## System control (systemd user unit)
+
 OpenClaw installs a systemd **user** service by default. Use a **system**
 service for shared or always-on servers. The full unit example and guidance
 live in the [Gateway runbook](/gateway).

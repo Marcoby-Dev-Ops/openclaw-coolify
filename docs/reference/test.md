@@ -17,11 +17,13 @@ read_when:
 Script: [`scripts/bench-model.ts`](https://github.com/openclaw/openclaw/blob/main/scripts/bench-model.ts)
 
 Usage:
+
 - `source ~/.profile && pnpm tsx scripts/bench-model.ts --runs 10`
 - Optional env: `MINIMAX_API_KEY`, `MINIMAX_BASE_URL`, `MINIMAX_MODEL`, `ANTHROPIC_API_KEY`
 - Default prompt: “Reply with a single word: ok. No punctuation or extra text.”
 
 Last run (2025-12-31, 20 runs):
+
 - minimax median 1279ms (min 1114, max 2431)
 - opus median 2454ms (min 1224, max 3170)
 

@@ -60,6 +60,7 @@ openclaw onboard --auth-choice venice-api-key
 ```
 
 This will:
+
 1. Prompt for your API key (or use existing `VENICE_API_KEY`)
 2. Show all available Venice models
 3. Let you pick your default model

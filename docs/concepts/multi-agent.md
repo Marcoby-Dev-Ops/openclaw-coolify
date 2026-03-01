@@ -110,6 +110,7 @@ Example:
 ```
 
 Notes:
+
 - DM access control is **global per WhatsApp account** (pairing/allowlist), not per agent.
 - For shared groups, bind the group to one agent or use [Broadcast groups](/broadcast-groups).
 
@@ -232,6 +233,7 @@ Split by channel: route WhatsApp to a fast everyday agent and Telegram to an Opu
 ```
 
 Notes:
+
 - If you have multiple accounts for a channel, add `accountId` to the binding (for example `{ channel: "whatsapp", accountId: "personal" }`).
 - To route a single DM/group to Opus while keeping the rest on chat, add a `match.peer` binding for that peer; peer matches always win over channel-wide rules.
 
@@ -297,6 +299,7 @@ and a tighter tool policy:
 ```
 
 Notes:
+
 - Tool allow/deny lists are **tools**, not skills. If a skill needs to run a
   binary, ensure `exec` is allowed and the binary exists in the sandbox.
 - For stricter gating, set `agents.list[].groupChat.mentionPatterns` and keep
@@ -343,6 +346,7 @@ Note: `setupCommand` lives under `sandbox.docker` and runs once on container cre
 Per-agent `sandbox.docker.*` overrides are ignored when the resolved scope is `"shared"`.
 
 **Benefits:**
+
 - **Security isolation**: Restrict tools for untrusted agents
 - **Resource control**: Sandbox specific agents while keeping others on host
 - **Flexible policies**: Different permissions per agent

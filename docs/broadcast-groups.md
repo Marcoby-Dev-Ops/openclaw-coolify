@@ -22,7 +22,9 @@ Broadcast groups are evaluated after channel allowlists and group activation rul
 ## Use Cases
 
 ### 1. Specialized Agent Teams
+
 Deploy multiple agents with atomic, focused responsibilities:
+
 ```
 Group: "Development Team"
 Agents:
@@ -35,6 +37,7 @@ Agents:
 Each agent processes the same message and provides its specialized perspective.
 
 ### 2. Multi-Language Support
+
 ```
 Group: "International Support"
 Agents:
@@ -44,6 +47,7 @@ Agents:
 ```
 
 ### 3. Quality Assurance Workflows
+
 ```
 Group: "Customer Support"
 Agents:
@@ -52,6 +56,7 @@ Agents:
 ```
 
 ### 4. Task Automation
+
 ```
 Group: "Project Management"
 Agents:
@@ -65,6 +70,7 @@ Agents:
 ### Basic Setup
 
 Add a top-level `broadcast` section (next to `bindings`). Keys are WhatsApp peer ids:
+
 - group chats: group JID (e.g. `120363403215116621@g.us`)
 - DMs: E.164 phone number (e.g. `+15551234567`)
 
@@ -83,7 +89,9 @@ Add a top-level `broadcast` section (next to `bindings`). Keys are WhatsApp peer
 Control how agents process messages:
 
 #### Parallel (Default)
+
 All agents process simultaneously:
+
 ```json
 {
   "broadcast": {
@@ -94,7 +102,9 @@ All agents process simultaneously:
 ```
 
 #### Sequential
+
 Agents process in order (one waits for previous to finish):
+
 ```json
 {
   "broadcast": {
@@ -166,6 +176,7 @@ Each agent in a broadcast group maintains completely separate:
 - **Group context buffer** (recent group messages used for context) is shared per peer, so all broadcast agents see the same context when triggered
 
 This allows each agent to have:
+
 - Different personalities
 - Different tool access (e.g., read-only vs. read-write)
 - Different models (e.g., opus vs. sonnet)
@@ -176,6 +187,7 @@ This allows each agent to have:
 In group `120363403215116621@g.us` with agents `["alfred", "baerbel"]`:
 
 **Alfred's context:**
+
 ```
 Session: agent:alfred:whatsapp:group:120363403215116621@g.us
 History: [user message, alfred's previous responses]
@@ -184,6 +196,7 @@ Tools: read, write, exec
 ```
 
 **Bärbel's context:**
+
 ```
 Session: agent:baerbel:whatsapp:group:120363403215116621@g.us  
 History: [user message, baerbel's previous responses]
@@ -242,6 +255,7 @@ Give agents only the tools they need:
 ### 4. Monitor Performance
 
 With many agents, consider:
+
 - Using `"strategy": "parallel"` (default) for speed
 - Limiting broadcast groups to 5-10 agents
 - Using faster models for simpler agents
@@ -260,6 +274,7 @@ Result: Agent A and C respond, Agent B logs error
 ### Providers
 
 Broadcast groups currently work with:
+
 - ✅ WhatsApp (implemented)
 - 🚧 Telegram (planned)
 - 🚧 Discord (planned)
@@ -290,11 +305,13 @@ Broadcast groups work alongside existing routing:
 ### Agents Not Responding
 
 **Check:**
+
 1. Agent IDs exist in `agents.list`
 2. Peer ID format is correct (e.g., `120363403215116621@g.us`)
 3. Agents are not in deny lists
 
 **Debug:**
+
 ```bash
 tail -f ~/.openclaw/logs/gateway.log | grep broadcast
 ```
@@ -308,6 +325,7 @@ tail -f ~/.openclaw/logs/gateway.log | grep broadcast
 ### Performance Issues
 
 **If slow with many agents:**
+
 - Reduce number of agents per group
 - Use lighter models (sonnet instead of opus)
 - Check sandbox startup time
@@ -340,6 +358,7 @@ tail -f ~/.openclaw/logs/gateway.log | grep broadcast
 
 **User sends:** Code snippet  
 **Responses:**
+
 - code-formatter: "Fixed indentation and added type hints"
 - security-scanner: "⚠️ SQL injection vulnerability in line 12"
 - test-coverage: "Coverage is 45%, missing tests for error cases"
@@ -395,6 +414,7 @@ interface OpenClawConfig {
 ## Future Enhancements
 
 Planned features:
+
 - [ ] Shared context mode (agents see each other's responses)
 - [ ] Agent coordination (agents can signal each other)
 - [ ] Dynamic agent selection (choose agents based on message content)

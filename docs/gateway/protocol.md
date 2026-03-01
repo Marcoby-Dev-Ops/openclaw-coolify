@@ -134,11 +134,14 @@ Side-effecting methods require **idempotency keys** (see schema).
 ## Roles + scopes
 
 ### Roles
+
 - `operator` = control plane client (CLI/UI/automation).
 - `node` = capability host (camera/screen/canvas/system.run).
 
 ### Scopes (operator)
+
 Common scopes:
+
 - `operator.read`
 - `operator.write`
 - `operator.admin`
@@ -146,7 +149,9 @@ Common scopes:
 - `operator.pairing`
 
 ### Caps/commands/permissions (node)
+
 Nodes declare capability claims at connect time:
+
 - `caps`: high-level capability categories.
 - `commands`: command allowlist for invoke.
 - `permissions`: granular toggles (e.g. `screen.record`, `camera.capture`).

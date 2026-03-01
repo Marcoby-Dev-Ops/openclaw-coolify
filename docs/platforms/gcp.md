@@ -25,6 +25,7 @@ Pricing varies by machine type and region; pick the smallest VM that fits your w
 - Access the Control UI from your laptop via an SSH tunnel
 
 The Gateway can be accessed via:
+
 - SSH port forwarding from your laptop
 - Direct port exposure if you manage firewalling and tokens yourself
 
@@ -67,7 +68,7 @@ For the generic Docker flow, see [Docker](/install/docker).
 
 **Option A: gcloud CLI** (recommended for automation)
 
-Install from https://cloud.google.com/sdk/docs/install
+Install from <https://cloud.google.com/sdk/docs/install>
 
 Initialize and authenticate:
 
@@ -78,7 +79,7 @@ gcloud auth login
 
 **Option B: Cloud Console**
 
-All steps can be done via the web UI at https://console.cloud.google.com
+All steps can be done via the web UI at <https://console.cloud.google.com>
 
 ---
 
@@ -91,7 +92,7 @@ gcloud projects create my-openclaw-project --name="OpenClaw Gateway"
 gcloud config set project my-openclaw-project
 ```
 
-Enable billing at https://console.cloud.google.com/billing (required for Compute Engine).
+Enable billing at <https://console.cloud.google.com/billing> (required for Compute Engine).
 
 Enable the Compute Engine API:
 
@@ -290,6 +291,7 @@ Anything installed at runtime will be lost on restart.
 All external binaries required by skills must be installed at image build time.
 
 The examples below show three common binaries only:
+
 - `gog` for Gmail access
 - `goplaces` for Google Places
 - `wacli` for WhatsApp
@@ -298,6 +300,7 @@ These are examples, not a complete list.
 You may install as many binaries as needed using the same pattern.
 
 If you add new skills later that depend on additional binaries, you must:
+
 1. Update the Dockerfile
 2. Rebuild the image
 3. Restart the containers
@@ -473,12 +476,14 @@ For personal use, your default user account works fine.
 For automation or CI/CD pipelines, create a dedicated service account with minimal permissions:
 
 1. Create a service account:
+
    ```bash
    gcloud iam service-accounts create openclaw-deploy \
      --display-name="OpenClaw Deployment"
    ```
 
 2. Grant Compute Instance Admin role (or narrower custom role):
+
    ```bash
    gcloud projects add-iam-policy-binding my-openclaw-project \
      --member="serviceAccount:openclaw-deploy@my-openclaw-project.iam.gserviceaccount.com" \
@@ -487,7 +492,7 @@ For automation or CI/CD pipelines, create a dedicated service account with minim
 
 Avoid using the Owner role for automation. Use the principle of least privilege.
 
-See https://cloud.google.com/iam/docs/understanding-roles for IAM role details.
+See <https://cloud.google.com/iam/docs/understanding-roles> for IAM role details.
 
 ---
 

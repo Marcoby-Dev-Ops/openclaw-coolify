@@ -7,8 +7,7 @@ read_when:
 ---
 # Vercel AI Gateway
 
-
-The [Vercel AI Gateway](https://vercel.com/ai-gateway) provides a unified API to access hundreds of models through a single endpoint. 
+The [Vercel AI Gateway](https://vercel.com/ai-gateway) provides a unified API to access hundreds of models through a single endpoint.
 
 - Provider: `vercel-ai-gateway`
 - Auth: `AI_GATEWAY_API_KEY`
@@ -22,7 +21,7 @@ The [Vercel AI Gateway](https://vercel.com/ai-gateway) provides a unified API to
 openclaw onboard --auth-choice ai-gateway-api-key
 ```
 
-2) Set a default model:
+1) Set a default model:
 
 ```json5
 {

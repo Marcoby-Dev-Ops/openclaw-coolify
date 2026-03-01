@@ -10,11 +10,13 @@ read_when:
 Last updated: 2026-01-01
 
 ## TL;DR
+
 - **Tailoring lives outside the repo:** `~/.openclaw/workspace` (workspace) + `~/.openclaw/openclaw.json` (config).
 - **Stable workflow:** install the macOS app; let it run the bundled Gateway.
 - **Bleeding edge workflow:** run the Gateway yourself via `pnpm gateway:watch`, then let the macOS app attach in Local mode.
 
 ## Prereqs (from source)
+
 - Node `>=22`
 - `pnpm`
 - Docker (optional; only for containerized setup/e2e — see [Docker](/install/docker))
@@ -51,13 +53,14 @@ If you don’t have a global install yet, run it via `pnpm openclaw setup`.
 openclaw channels login
 ```
 
-5) Sanity check:
+1) Sanity check:
 
 ```bash
 openclaw health
 ```
 
 If onboarding is not available in your build:
+
 - Run `openclaw setup`, then `openclaw channels login`, then start the Gateway manually (`openclaw gateway`).
 
 ## Bleeding edge workflow (Gateway in a terminal)
@@ -98,6 +101,7 @@ openclaw health
 ```
 
 ### Common footguns
+
 - **Wrong port:** Gateway WS defaults to `ws://127.0.0.1:18789`; keep app + CLI on the same port.
 - **Where state lives:**
   - Credentials: `~/.openclaw/credentials/`

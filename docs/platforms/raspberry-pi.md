@@ -13,6 +13,7 @@ read_when:
 Run a persistent, always-on OpenClaw Gateway on a Raspberry Pi for **~$35-80** one-time cost (no monthly fees).
 
 Perfect for:
+
 - 24/7 personal AI assistant
 - Home automation hub
 - Low-power, always-available Telegram/WhatsApp bot
@@ -132,6 +133,7 @@ openclaw onboard --install-daemon
 ```
 
 Follow the wizard:
+
 1. **Gateway mode:** Local
 2. **Auth:** API keys recommended (OAuth can be finicky on headless Pi)
 3. **Channels:** Telegram is easiest to start with
@@ -312,6 +314,7 @@ sudo systemctl restart openclaw
 ### ARM Binary Issues
 
 If a skill fails with "exec format error":
+
 1. Check if the binary has an ARM64 build
 2. Try building from source
 3. Or use a Docker container with ARM support

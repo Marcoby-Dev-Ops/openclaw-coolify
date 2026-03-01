@@ -26,6 +26,7 @@ Your App → claude-max-api-proxy → Claude Code CLI → Anthropic (via subscri
 ```
 
 The proxy:
+
 1. Accepts OpenAI-format requests at `http://localhost:3456/v1/chat/completions`
 2. Converts them to Claude Code CLI commands
 3. Returns responses in OpenAI format (streaming supported)
@@ -128,9 +129,9 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.claude-max-api.plist
 
 ## Links
 
-- **npm:** https://www.npmjs.com/package/claude-max-api-proxy
-- **GitHub:** https://github.com/atalovesyou/claude-max-api-proxy
-- **Issues:** https://github.com/atalovesyou/claude-max-api-proxy/issues
+- **npm:** <https://www.npmjs.com/package/claude-max-api-proxy>
+- **GitHub:** <https://github.com/atalovesyou/claude-max-api-proxy>
+- **Issues:** <https://github.com/atalovesyou/claude-max-api-proxy/issues>
 
 ## Notes
 

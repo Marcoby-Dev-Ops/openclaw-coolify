@@ -70,7 +70,7 @@ Example: switch to Perplexity Sonar (direct API):
 
 ## Getting a Brave API key
 
-1) Create a Brave Search API account at https://brave.com/search/api/
+1) Create a Brave Search API account at <https://brave.com/search/api/>
 2) In the dashboard, choose the **Data for Search** plan (not “Data for AI”) and generate an API key.
 3) Run `openclaw configure --section web` to store the key in config (recommended), or set `BRAVE_API_KEY` in your environment.
 
@@ -94,7 +94,7 @@ crypto/prepaid).
 
 ### Getting an OpenRouter API key
 
-1) Create an account at https://openrouter.ai/
+1) Create an account at <https://openrouter.ai/>
 2) Add credits (supports crypto, prepaid, or credit card)
 3) Generate an API key in your account settings
 
@@ -246,6 +246,7 @@ Fetch a URL and extract readable content.
 - `maxChars` (truncate long pages)
 
 Notes:
+
 - `web_fetch` uses Readability (main-content extraction) first, then Firecrawl (if configured). If both fail, the tool returns an error.
 - Firecrawl requests use bot-circumvention mode and cache results by default.
 - `web_fetch` sends a Chrome-like User-Agent and `Accept-Language` by default; override `userAgent` if needed.

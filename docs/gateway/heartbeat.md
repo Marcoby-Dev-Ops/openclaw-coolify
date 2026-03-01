@@ -49,6 +49,7 @@ Example config:
 ## What the heartbeat prompt is for
 
 The default prompt is intentionally broad:
+
 - **Background tasks**: “Consider outstanding tasks” nudges the agent to review
   follow-ups (inbox, calendar, reminders, queued work) and surface anything urgent.
 - **Human check-in**: “Checkup sometimes on your human during day time” nudges an
@@ -254,6 +255,7 @@ Yes — if you ask it to.
 
 `HEARTBEAT.md` is just a normal file in the agent workspace, so you can tell the
 agent (in a normal chat) something like:
+
 - “Update `HEARTBEAT.md` to add a daily calendar check.”
 - “Rewrite `HEARTBEAT.md` so it’s shorter and focused on inbox follow-ups.”
 
@@ -282,6 +284,7 @@ Use `--mode next-heartbeat` to wait for the next scheduled tick.
 By default, heartbeats deliver only the final “answer” payload.
 
 If you want transparency, enable:
+
 - `agents.defaults.heartbeat.includeReasoning: true`
 
 When enabled, heartbeats will also deliver a separate message prefixed

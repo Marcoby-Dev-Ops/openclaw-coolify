@@ -10,6 +10,7 @@ Skills define *how* tools work. This file is for *your* specifics — the stuff 
 ## What Goes Here
 
 Things like:
+
 - Camera names and locations
 - SSH hosts and aliases  
 - Preferred voices for TTS

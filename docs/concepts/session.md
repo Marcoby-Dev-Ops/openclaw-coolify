@@ -8,6 +8,7 @@ read_when:
 OpenClaw treats **one direct-chat session per agent** as primary. Direct chats collapse to `agent:<agentId>:<mainKey>` (default `main`), while group/channel chats get their own keys. `session.mainKey` is honored.
 
 Use `session.dmScope` to control how **direct messages** are grouped:
+
 - `main` (default): all DMs share the main session for continuity.
 - `per-peer`: isolate by sender id across channels.
 - `per-channel-peer`: isolate by channel + sender (recommended for multi-user inboxes).
@@ -15,12 +16,14 @@ Use `session.dmScope` to control how **direct messages** are grouped:
 Use `session.identityLinks` to map provider-prefixed peer ids to a canonical identity so the same person shares a DM session across channels when using `per-peer`, `per-channel-peer`, or `per-account-channel-peer`.
 
 ## Gateway is the source of truth
+
 All session state is **owned by the gateway** (the “master” OpenClaw). UI clients (macOS app, WebChat, etc.) must query the gateway for session lists and token counts instead of reading local files.
 
 - In **remote mode**, the session store you care about lives on the remote gateway host, not your Mac.
 - Token counts shown in UIs come from the gateway’s store fields (`inputTokens`, `outputTokens`, `totalTokens`, `contextTokens`). Clients do not parse JSONL transcripts to “fix up” totals.
 
 ## Where state lives
+
 - On the **gateway host**:
   - Store file: `~/.openclaw/agents/<agentId>/sessions/sessions.json` (per agent).
 - Transcripts: `~/.openclaw/agents/<agentId>/sessions/<SessionId>.jsonl` (Telegram topic sessions use `.../<SessionId>-topic-<threadId>.jsonl`).
@@ -30,16 +33,19 @@ All session state is **owned by the gateway** (the “master” OpenClaw). UI cl
 - OpenClaw does **not** read legacy Pi/Tau session folders.
 
 ## Session pruning
+
 OpenClaw trims **old tool results** from the in-memory context right before LLM calls by default.
 This does **not** rewrite JSONL history. See [/concepts/session-pruning](/concepts/session-pruning).
 
 ## Pre-compaction memory flush
+
 When a session nears auto-compaction, OpenClaw can run a **silent memory flush**
 turn that reminds the model to write durable notes to disk. This only runs when
 the workspace is writable. See [Memory](/concepts/memory) and
 [Compaction](/concepts/compaction).
 
 ## Mapping transports → session keys
+
 - Direct chats follow `session.dmScope` (default `main`).
   - `main`: `agent:<agentId>:<mainKey>` (continuity across devices/channels).
     - Multiple phone numbers and channels can map to the same agent main key; they act as transports into one conversation.
@@ -57,6 +63,7 @@ the workspace is writable. See [Memory](/concepts/memory) and
   - Node runs: `node-<nodeId>`
 
 ## Lifecycle
+
 - Reset policy: sessions are reused until they expire, and expiry is evaluated on the next inbound message.
 - Daily reset: defaults to **4:00 AM local time on the gateway host**. A session is stale once its last update is earlier than the most recent daily reset time.
 - Idle reset (optional): `idleMinutes` adds a sliding idle window. When both daily and idle resets are configured, **whichever expires first** forces a new session.
@@ -68,6 +75,7 @@ the workspace is writable. See [Memory](/concepts/memory) and
 - Isolated cron jobs always mint a fresh `sessionId` per run (no idle reuse).
 
 ## Send policy (optional)
+
 Block delivery for specific session types without listing individual ids.
 
 ```json5
@@ -85,12 +93,14 @@ Block delivery for specific session types without listing individual ids.
 ```
 
 Runtime override (owner only):
+
 - `/send on` → allow for this session
 - `/send off` → deny for this session
 - `/send inherit` → clear override and use config rules
 Send these as standalone messages so they register.
 
 ## Configuration (optional rename example)
+
 ```json5
 // ~/.openclaw/openclaw.json
 {
@@ -123,6 +133,7 @@ Send these as standalone messages so they register.
 ```
 
 ## Inspecting
+
 - `openclaw status` — shows store path and recent sessions.
 - `openclaw sessions --json` — dumps every entry (filter with `--active <minutes>`).
 - `openclaw gateway call sessions.list --params '{}'` — fetch sessions from the running gateway (use `--url`/`--token` for remote gateway access).
@@ -133,11 +144,14 @@ Send these as standalone messages so they register.
 - JSONL transcripts can be opened directly to review full turns.
 
 ## Tips
+
 - Keep the primary key dedicated to 1:1 traffic; let groups keep their own keys.
 - When automating cleanup, delete individual keys instead of the whole store to preserve context elsewhere.
 
 ## Session origin metadata
+
 Each session entry records where it came from (best-effort) in `origin`:
+
 - `label`: human label (resolved from conversation label + group subject/channel)
 - `provider`: normalized channel id (including extensions)
 - `from`/`to`: raw routing ids from the inbound envelope

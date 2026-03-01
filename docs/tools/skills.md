@@ -48,7 +48,7 @@ tool surface those skills teach.
 ## ClawdHub (install + sync)
 
 ClawdHub is the public skills registry for OpenClaw. Browse at
-https://clawdhub.com. Use it to discover, install, update, and back up skills.
+<https://clawdhub.com>. Use it to discover, install, update, and back up skills.
 Full guide: [ClawdHub](/tools/clawdhub).
 
 Common flows:
@@ -84,6 +84,7 @@ description: Generate or edit images via Gemini 3 Pro Image
 ```
 
 Notes:
+
 - We follow the AgentSkills spec for layout/intent.
 - The parser used by the embedded agent supports **single-line** frontmatter keys only.
 - `metadata` should be a **single-line JSON object**.
@@ -112,6 +113,7 @@ metadata: {"openclaw":{"requires":{"bins":["uv"],"env":["GEMINI_API_KEY"],"confi
 ```
 
 Fields under `metadata.openclaw`:
+
 - `always: true` — always include the skill (skip other gates).
 - `emoji` — optional emoji used by the macOS Skills UI.
 - `homepage` — optional URL shown as “Website” in the macOS Skills UI.
@@ -124,6 +126,7 @@ Fields under `metadata.openclaw`:
 - `install` — optional array of installer specs used by the macOS Skills UI (brew/node/go/uv/download).
 
 Note on sandboxing:
+
 - `requires.bins` is checked on the **host** at skill load time.
 - If an agent is sandboxed, the binary must also exist **inside the container**.
   Install it via `agents.defaults.sandbox.docker.setupCommand` (or a custom image).
@@ -143,6 +146,7 @@ metadata: {"openclaw":{"emoji":"♊️","requires":{"bins":["gemini"]},"install"
 ```
 
 Notes:
+
 - If multiple installers are listed, the gateway picks a **single** preferred option (brew when available, otherwise node).
 - If all installers are `download`, OpenClaw lists each entry so you can see the available artifacts.
 - Installer specs can include `os: ["darwin"|"linux"|"win32"]` to filter options by platform.
@@ -150,7 +154,7 @@ Notes:
   This only affects **skill installs**; the Gateway runtime should still be Node
   (Bun is not recommended for WhatsApp/Telegram).
 - Go installs: if `go` is missing and `brew` is available, the gateway installs Go via Homebrew first and sets `GOBIN` to Homebrew’s `bin` when possible.
- - Download installs: `url` (required), `archive` (`tar.gz` | `tar.bz2` | `zip`), `extract` (default: auto when archive detected), `stripComponents`, `targetDir` (default: `~/.openclaw/tools/<skillKey>`).
+- Download installs: `url` (required), `archive` (`tar.gz` | `tar.bz2` | `zip`), `extract` (default: auto when archive detected), `stripComponents`, `targetDir` (default: `~/.openclaw/tools/<skillKey>`).
 
 If no `metadata.openclaw` is present, the skill is always eligible (unless
 disabled in config or blocked by `skills.allowBundled` for bundled skills).
@@ -187,6 +191,7 @@ Config keys match the **skill name** by default. If a skill defines
 `metadata.openclaw.skillKey`, use that key under `skills.entries`.
 
 Rules:
+
 - `enabled: false` disables the skill even if it’s bundled/installed.
 - `env`: injected **only if** the variable isn’t already set in the process.
 - `apiKey`: convenience for skills that declare `metadata.openclaw.primaryEnv`.
@@ -197,6 +202,7 @@ Rules:
 ## Environment injection (per agent run)
 
 When an agent run starts, OpenClaw:
+
 1) Reads skill metadata.
 2) Applies any `skills.entries.<key>.env` or `skills.entries.<key>.apiKey` to
    `process.env`.
@@ -246,6 +252,7 @@ total = 195 + Σ (97 + len(name_escaped) + len(description_escaped) + len(locati
 ```
 
 Notes:
+
 - XML escaping expands `& < > " '` into entities (`&amp;`, `&lt;`, etc.), increasing length.
 - Token counts vary by model tokenizer. A rough OpenAI-style estimate is ~4 chars/token, so **97 chars ≈ 24 tokens** per skill plus your actual field lengths.
 
@@ -262,6 +269,6 @@ See [Skills config](/tools/skills-config) for the full configuration schema.
 
 ## Looking for more skills?
 
-Browse https://clawdhub.com.
+Browse <https://clawdhub.com>.
 
 ---

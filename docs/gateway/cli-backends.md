@@ -75,6 +75,7 @@ Add a CLI backend to your fallback list so it only runs when primary models fail
 ```
 
 Notes:
+
 - If you use `agents.defaults.models` (allowlist), you must include `claude-cli/...`.
 - If the primary provider fails (auth, rate limits, timeouts), OpenClaw will
   try the CLI backend next.
@@ -172,6 +173,7 @@ load local files from plain paths (Claude Code CLI behavior).
 - `output: "text"` treats stdout as the final response.
 
 Input modes:
+
 - `input: "arg"` (default) passes the prompt as the last CLI arg.
 - `input: "stdin"` sends the prompt via stdin.
 - If the prompt is very long and `maxPromptArgChars` is set, stdin is used.

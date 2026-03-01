@@ -26,9 +26,11 @@ openclaw models auth login --provider <id>
 OAuth providers commonly mint a **new refresh token** during login/refresh flows. Some providers (or OAuth clients) can invalidate older refresh tokens when a new one is issued for the same user/app.
 
 Practical symptom:
+
 - you log in via OpenClaw *and* via Claude Code / Codex CLI → one of them randomly gets “logged out” later
 
 To reduce that, OpenClaw treats `auth-profiles.json` as a **token sink**:
+
 - the runtime reads credentials from **one place**
 - we can keep multiple profiles and route them deterministically
 
@@ -40,6 +42,7 @@ Secrets are stored **per-agent**:
 - Runtime cache (managed automatically; don’t edit): `~/.openclaw/agents/<agentId>/agent/auth.json`
 
 Legacy import-only file (still supported, but not the main store):
+
 - `~/.openclaw/credentials/oauth.json` (imported into `auth-profiles.json` on first use)
 
 All of the above also respect `$OPENCLAW_STATE_DIR` (state dir override). Full reference: [/gateway/configuration](/gateway/configuration#auth-storage-oauth--api-keys)
@@ -96,6 +99,7 @@ Wizard path is `openclaw onboard` → auth choice `openai-codex`.
 Profiles store an `expires` timestamp.
 
 At runtime:
+
 - if `expires` is in the future → use the stored access token
 - if expired → refresh (under a file lock) and overwrite the stored credentials
 
@@ -121,15 +125,19 @@ Then configure auth per-agent (wizard) and route chats to the right agent.
 `auth-profiles.json` supports multiple profile IDs for the same provider.
 
 Pick which profile is used:
+
 - globally via config ordering (`auth.order`)
 - per-session via `/model ...@<profileId>`
 
 Example (session override):
+
 - `/model Opus@anthropic:work`
 
 How to see what profile IDs exist:
+
 - `openclaw channels list --json` (shows `auth[]`)
 
 Related docs:
+
 - [/concepts/model-failover](/concepts/model-failover) (rotation + cooldown rules)
 - [/tools/slash-commands](/tools/slash-commands) (command surface)

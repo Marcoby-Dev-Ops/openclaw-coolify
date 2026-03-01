@@ -196,6 +196,7 @@ tools, include the core tools or groups you want in the allowlist too.
 ## Example: Email triage
 
 Without Lobster:
+
 ```
 User: "Check my email and draft replies"
 → openclaw calls gmail.list
@@ -208,6 +209,7 @@ User: "Check my email and draft replies"
 ```
 
 With Lobster:
+
 ```json
 {
   "action": "run",
@@ -217,6 +219,7 @@ With Lobster:
 ```
 
 Returns a JSON envelope (truncated):
+
 ```json
 {
   "ok": true,
@@ -232,6 +235,7 @@ Returns a JSON envelope (truncated):
 ```
 
 User approves → resume:
+
 ```json
 {
   "action": "resume",
@@ -334,5 +338,5 @@ OpenProse pairs well with Lobster: use `/prose` to orchestrate multi-agent prep,
 
 One public example: a “second brain” CLI + Lobster pipelines that manage three Markdown vaults (personal, partner, shared). The CLI emits JSON for stats, inbox listings, and stale scans; Lobster chains those commands into workflows like `weekly-review`, `inbox-triage`, `memory-consolidation`, and `shared-task-sync`, each with approval gates. AI handles judgment (categorization) when available and falls back to deterministic rules when not.
 
-- Thread: https://x.com/plattenschieber/status/2014508656335770033
-- Repo: https://github.com/bloomedai/brain-cli
+- Thread: <https://x.com/plattenschieber/status/2014508656335770033>
+- Repo: <https://github.com/bloomedai/brain-cli>

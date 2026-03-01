@@ -54,6 +54,7 @@ openclaw gateway
 ```
 
 Open:
+
 - `https://<magicdns>/` (or your configured `gateway.controlUi.basePath`)
 
 ### Tailnet bind + token
@@ -75,6 +76,7 @@ openclaw gateway
 ```
 
 Open:
+
 - `http://<tailscale-ip>:18789/` (or your configured `gateway.controlUi.basePath`)
 
 ### Public internet (Funnel)

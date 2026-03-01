@@ -38,6 +38,7 @@ with JS-heavy sites or pages that block plain HTTP fetches.
 ```
 
 Notes:
+
 - `firecrawl.enabled` defaults to true when an API key is present.
 - `maxAgeMs` controls how old cached results can be (ms). Default is 2 days.
 
@@ -51,6 +52,7 @@ than basic-only scraping.
 ## How `web_fetch` uses Firecrawl
 
 `web_fetch` extraction order:
+
 1) Readability (local)
 2) Firecrawl (if configured)
 3) Basic HTML cleanup (last fallback)

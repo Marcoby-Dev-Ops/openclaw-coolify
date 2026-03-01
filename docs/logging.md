@@ -163,9 +163,11 @@ diagnostics + the exporter plugin are enabled.
 ### Diagnostic event catalog
 
 Model usage:
+
 - `model.usage`: tokens, cost, duration, context, provider/model/channel, session ids.
 
 Message flow:
+
 - `webhook.received`: webhook ingress per channel.
 - `webhook.processed`: webhook handled + duration.
 - `webhook.error`: webhook handler errors.
@@ -173,6 +175,7 @@ Message flow:
 - `message.processed`: outcome + duration + optional error.
 
 Queue + session:
+
 - `queue.lane.enqueue`: command queue lane enqueue + depth.
 - `queue.lane.dequeue`: command queue lane dequeue + wait time.
 - `session.state`: session state transition + reason.
@@ -212,6 +215,7 @@ OPENCLAW_DIAGNOSTICS=telegram.http,telegram.payload
 ```
 
 Notes:
+
 - Flag logs go to the standard log file (same as `logging.file`).
 - Output is still redacted according to `logging.redactSensitive`.
 - Full guide: [/diagnostics/flags](/diagnostics/flags).
@@ -249,6 +253,7 @@ works with any OpenTelemetry collector/backend that accepts OTLP/HTTP.
 ```
 
 Notes:
+
 - You can also enable the plugin with `openclaw plugins enable diagnostics-otel`.
 - `protocol` currently supports `http/protobuf` only. `grpc` is ignored.
 - Metrics include token usage, cost, context size, run duration, and message-flow
@@ -262,6 +267,7 @@ Notes:
 ### Exported metrics (names + types)
 
 Model usage:
+
 - `openclaw.tokens` (counter, attrs: `openclaw.token`, `openclaw.channel`,
   `openclaw.provider`, `openclaw.model`)
 - `openclaw.cost.usd` (counter, attrs: `openclaw.channel`, `openclaw.provider`,
@@ -272,6 +278,7 @@ Model usage:
   `openclaw.channel`, `openclaw.provider`, `openclaw.model`)
 
 Message flow:
+
 - `openclaw.webhook.received` (counter, attrs: `openclaw.channel`,
   `openclaw.webhook`)
 - `openclaw.webhook.error` (counter, attrs: `openclaw.channel`,
@@ -286,6 +293,7 @@ Message flow:
   `openclaw.outcome`)
 
 Queues + sessions:
+
 - `openclaw.queue.lane.enqueue` (counter, attrs: `openclaw.lane`)
 - `openclaw.queue.lane.dequeue` (counter, attrs: `openclaw.lane`)
 - `openclaw.queue.depth` (histogram, attrs: `openclaw.lane` or

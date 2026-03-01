@@ -12,6 +12,7 @@ Example
 
 Notes
 -----
+
 - The provided `docker-compose.ghcr.yaml` mirrors the service config but uses an image reference for `openclaw` (defaults to `:latest`).
 - You can override the default tag by setting `OPENCLAW_IMAGE` to a specific GHCR tag or digest (recommended for production).
 - If you need both options (build from source for dev, pull image for production), keep both compose files and choose the appropriate one when creating/updating the Coolify app.

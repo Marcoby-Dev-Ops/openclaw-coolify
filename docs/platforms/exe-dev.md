@@ -24,7 +24,6 @@ This page assumes exe.dev's default **exeuntu** image. If you picked a different
 - exe.dev account
 - `ssh exe.dev` access to [exe.dev](https://exe.dev) virtual machines (optional)
 
-
 ## Automated Install with Shelley
 
 Shelley, [exe.dev](https://exe.dev)'s agent, can install OpenClaw instantly with our
@@ -111,7 +110,7 @@ use Shelley from your browser!
 
 Remote access is handled by [exe.dev](https://exe.dev)'s authentication. By
 default, HTTP traffic from port 8000 is forwarded to `https://<vm-name>.exe.xyz`
-with email auth. 
+with email auth.
 
 ## Updating
 

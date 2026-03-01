@@ -32,6 +32,7 @@ Where does the **Gateway** run?
 - **Configure later:** skip setup and leave the app unconfigured.
 
 Gateway auth tip:
+
 - The wizard now generates a **token** even for loopback, so local WS clients must authenticate.
 - If you disable auth, any local process can connect; use that only on fully trusted machines.
 - Use a **token** for multi‑machine access or non‑loopback binds.

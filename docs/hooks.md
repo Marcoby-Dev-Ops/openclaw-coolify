@@ -18,6 +18,7 @@ Hooks are small scripts that run when something happens. There are two kinds:
 Hooks can also be bundled inside plugins; see [Plugins](/plugin#plugin-hooks).
 
 Common uses:
+
 - Save a memory snapshot when you reset a session
 - Keep an audit trail of commands for troubleshooting or compliance
 - Trigger follow-up automation when a session starts or ends
@@ -28,6 +29,7 @@ If you can write a small TypeScript function, you can write a hook. Hooks are di
 ## Overview
 
 The hooks system allows you to:
+
 - Save session context to memory when `/new` is issued
 - Log all commands for auditing
 - Trigger custom automations on agent lifecycle events
@@ -452,6 +454,7 @@ Saves session context to memory when you issue `/new`.
 **Output**: `<workspace>/memory/YYYY-MM-DD-slug.md` (defaults to `~/.openclaw/workspace`)
 
 **What it does**:
+
 1. Uses the pre-reset session entry to locate the correct transcript
 2. Extracts the last 15 lines of conversation
 3. Uses LLM to generate a descriptive filename slug
@@ -468,6 +471,7 @@ Saves session context to memory when you issue `/new`.
 ```
 
 **Filename examples**:
+
 - `2026-01-16-vendor-pitch.md`
 - `2026-01-16-api-design.md`
 - `2026-01-16-1430.md` (fallback timestamp if slug generation fails)
@@ -489,6 +493,7 @@ Logs all command events to a centralized audit file.
 **Output**: `~/.openclaw/logs/commands.log`
 
 **What it does**:
+
 1. Captures event details (command action, timestamp, session key, sender ID, source)
 2. Appends to log file in JSONL format
 3. Runs silently in the background
@@ -565,6 +570,7 @@ Internal hooks must be enabled for this to run.
 **Requirements**: `workspace.dir` must be configured
 
 **What it does**:
+
 1. Reads `BOOT.md` from your workspace
 2. Runs the instructions via the agent runner
 3. Sends any requested outbound messages via the message tool
@@ -764,18 +770,21 @@ Session reset
 ### Hook Not Discovered
 
 1. Check directory structure:
+
    ```bash
    ls -la ~/.openclaw/hooks/my-hook/
    # Should show: HOOK.md, handler.ts
    ```
 
 2. Verify HOOK.md format:
+
    ```bash
    cat ~/.openclaw/hooks/my-hook/HOOK.md
    # Should have YAML frontmatter with name and metadata
    ```
 
 3. List all discovered hooks:
+
    ```bash
    openclaw hooks list
    ```
@@ -789,6 +798,7 @@ openclaw hooks info my-hook
 ```
 
 Look for missing:
+
 - Binaries (check PATH)
 - Environment variables
 - Config values
@@ -797,6 +807,7 @@ Look for missing:
 ### Hook Not Executing
 
 1. Verify hook is enabled:
+
    ```bash
    openclaw hooks list
    # Should show ✓ next to enabled hooks
@@ -805,6 +816,7 @@ Look for missing:
 2. Restart your gateway process so hooks reload.
 
 3. Check gateway logs for errors:
+
    ```bash
    ./scripts/clawlog.sh | grep hook
    ```
@@ -843,12 +855,14 @@ node -e "import('./path/to/handler.ts').then(console.log)"
 **After**:
 
 1. Create hook directory:
+
    ```bash
    mkdir -p ~/.openclaw/hooks/my-hook
    mv ./hooks/handlers/my-handler.ts ~/.openclaw/hooks/my-hook/handler.ts
    ```
 
 2. Create HOOK.md:
+
    ```markdown
    ---
    name: my-hook
@@ -862,6 +876,7 @@ node -e "import('./path/to/handler.ts').then(console.log)"
    ```
 
 3. Update config:
+
    ```json
    {
      "hooks": {
@@ -876,12 +891,14 @@ node -e "import('./path/to/handler.ts').then(console.log)"
    ```
 
 4. Verify and restart your gateway process:
+
    ```bash
    openclaw hooks list
    # Should show: 🎯 my-hook ✓
    ```
 
 **Benefits of migration**:
+
 - Automatic discovery
 - CLI management
 - Eligibility checking

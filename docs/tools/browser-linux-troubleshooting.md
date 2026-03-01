@@ -8,6 +8,7 @@ read_when: "Browser control fails on Linux, especially with snap Chromium"
 ## Problem: "Failed to start Chrome CDP on port 18800"
 
 OpenClaw's browser control server fails to launch Chrome/Brave/Edge/Chromium with the error:
+
 ```
 {"error":"Error: Failed to start Chrome CDP on port 18800 for profile \"openclaw\"."}
 ```
@@ -17,6 +18,7 @@ OpenClaw's browser control server fails to launch Chrome/Brave/Edge/Chromium wit
 On Ubuntu (and many Linux distros), the default Chromium installation is a **snap package**. Snap's AppArmor confinement interferes with how OpenClaw spawns and monitors the browser process.
 
 The `apt install chromium` command installs a stub package that redirects to snap:
+
 ```
 Note, selecting 'chromium-browser' instead of 'chromium'
 chromium-browser is already the newest version (2:1snap1-0ubuntu2).
@@ -52,6 +54,7 @@ Then update your OpenClaw config (`~/.openclaw/openclaw.json`):
 If you must use snap Chromium, configure OpenClaw to attach to a manually-started browser:
 
 1. Update config:
+
 ```json
 {
   "browser": {
@@ -63,7 +66,8 @@ If you must use snap Chromium, configure OpenClaw to attach to a manually-starte
 }
 ```
 
-2. Start Chromium manually:
+1. Start Chromium manually:
+
 ```bash
 chromium-browser --headless --no-sandbox --disable-gpu \
   --remote-debugging-port=18800 \
@@ -71,7 +75,8 @@ chromium-browser --headless --no-sandbox --disable-gpu \
   about:blank &
 ```
 
-3. Optionally create a systemd user service to auto-start Chrome:
+1. Optionally create a systemd user service to auto-start Chrome:
+
 ```ini
 # ~/.config/systemd/user/openclaw-browser.service
 [Unit]
@@ -92,11 +97,13 @@ Enable with: `systemctl --user enable --now openclaw-browser.service`
 ### Verifying the Browser Works
 
 Check status:
+
 ```bash
 curl -s http://127.0.0.1:18791/ | jq '{running, pid, chosenBrowser}'
 ```
 
 Test browsing:
+
 ```bash
 curl -s -X POST http://127.0.0.1:18791/start
 curl -s http://127.0.0.1:18791/tabs
@@ -119,11 +126,13 @@ You’re using the `chrome` profile (extension relay). It expects the OpenClaw
 browser extension to be attached to a live tab.
 
 Fix options:
+
 1. **Use the managed browser:** `openclaw browser start --browser-profile openclaw`
    (or set `browser.defaultProfile: "openclaw"`).
 2. **Use the extension relay:** install the extension, open a tab, and click the
    OpenClaw extension icon to attach it.
 
 Notes:
+
 - The `chrome` profile uses your **system default Chromium browser** when possible.
 - Local `openclaw` profiles auto-assign `cdpPort`/`cdpUrl`; only set those for remote CDP.

@@ -24,6 +24,7 @@ If you want a $0/month option and don’t mind ARM + provider-specific setup, se
 | Linode | Nanode | 1 vCPU, 1GB RAM | $5 | Now part of Akamai |
 
 **Picking a provider:**
+
 - DigitalOcean: simplest UX + predictable setup (this guide)
 - Hetzner: good price/perf (see [Hetzner guide](/platforms/hetzner))
 - Oracle Cloud: can be $0/month, but is more finicky and ARM-only (see [Oracle guide](/platforms/oracle))
@@ -78,6 +79,7 @@ openclaw onboard --install-daemon
 ```
 
 The wizard will walk you through:
+
 - Model auth (API keys or OAuth)
 - Channel setup (Telegram, WhatsApp, Discord, etc.)
 - Gateway token (auto-generated)
@@ -101,6 +103,7 @@ journalctl --user -u openclaw-gateway.service -f
 The gateway binds to loopback by default. To access the Control UI:
 
 **Option A: SSH Tunnel (recommended)**
+
 ```bash
 # From your local machine
 ssh -L 18789:localhost:18789 root@YOUR_DROPLET_IP
@@ -109,6 +112,7 @@ ssh -L 18789:localhost:18789 root@YOUR_DROPLET_IP
 ```
 
 **Option B: Tailscale Serve (HTTPS, loopback-only)**
+
 ```bash
 # On the droplet
 curl -fsSL https://tailscale.com/install.sh | sh
@@ -122,10 +126,12 @@ openclaw gateway restart
 Open: `https://<magicdns>/`
 
 Notes:
+
 - Serve keeps the Gateway loopback-only and authenticates via Tailscale identity headers.
 - To require token/password instead, set `gateway.auth.allowTailscale: false` or use `gateway.auth.mode: "password"`.
 
 **Option C: Tailnet bind (no Serve)**
+
 ```bash
 openclaw config set gateway.bind tailnet
 openclaw gateway restart
@@ -136,12 +142,14 @@ Open: `http://<tailscale-ip>:18789` (token required).
 ## 7) Connect Your Channels
 
 ### Telegram
+
 ```bash
 openclaw pairing list telegram
 openclaw pairing approve telegram <CODE>
 ```
 
 ### WhatsApp
+
 ```bash
 openclaw channels login whatsapp
 # Scan QR code
@@ -156,6 +164,7 @@ See [Channels](/channels) for other providers.
 The $6 droplet only has 1GB RAM. To keep things running smoothly:
 
 ### Add swap (recommended)
+
 ```bash
 fallocate -l 2G /swapfile
 chmod 600 /swapfile
@@ -165,11 +174,14 @@ echo '/swapfile none swap sw 0 0' >> /etc/fstab
 ```
 
 ### Use a lighter model
+
 If you're hitting OOMs, consider:
+
 - Using API-based models (Claude, GPT) instead of local models
 - Setting `agents.defaults.model.primary` to a smaller model
 
 ### Monitor memory
+
 ```bash
 free -h
 htop
@@ -180,10 +192,12 @@ htop
 ## Persistence
 
 All state lives in:
+
 - `~/.openclaw/` — config, credentials, session data
 - `~/.openclaw/workspace/` — workspace (SOUL.md, memory, etc.)
 
 These survive reboots. Back them up periodically:
+
 ```bash
 tar -czvf openclaw-backup.tar.gz ~/.openclaw ~/.openclaw/workspace
 ```
@@ -202,6 +216,7 @@ Oracle Cloud offers **Always Free** ARM instances that are significantly more po
 | **Forever free** | No credit card charges |
 
 **Caveats:**
+
 - Signup can be finicky (retry if it fails)
 - ARM architecture — most things work, but some binaries need ARM builds
 
@@ -212,6 +227,7 @@ For the full setup guide, see [Oracle Cloud](/platforms/oracle). For signup tips
 ## Troubleshooting
 
 ### Gateway won't start
+
 ```bash
 openclaw gateway status
 openclaw doctor --non-interactive
@@ -219,12 +235,14 @@ journalctl -u openclaw --no-pager -n 50
 ```
 
 ### Port already in use
+
 ```bash
 lsof -i :18789
 kill <PID>
 ```
 
 ### Out of memory
+
 ```bash
 # Check memory
 free -h

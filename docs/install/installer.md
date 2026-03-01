@@ -12,7 +12,7 @@ OpenClaw ships two installer scripts (served from `openclaw.ai`):
 
 - `https://openclaw.bot/install.sh` — “recommended” installer (global npm install by default; can also install from a GitHub checkout)
 - `https://openclaw.bot/install-cli.sh` — non-root-friendly CLI installer (installs into a prefix with its own Node)
- - `https://openclaw.ai/install.ps1` — Windows PowerShell installer (npm by default; optional git install)
+- `https://openclaw.ai/install.ps1` — Windows PowerShell installer (npm by default; optional git install)
 
 To see the current flags/behavior, run:
 

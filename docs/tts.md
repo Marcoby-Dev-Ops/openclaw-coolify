@@ -32,6 +32,7 @@ does not publish limits, so assume similar or lower limits. citeturn0searc
 ## Optional keys
 
 If you want OpenAI or ElevenLabs:
+
 - `ELEVENLABS_API_KEY` (or `XI_API_KEY`)
 - `OPENAI_API_KEY`
 
@@ -250,6 +251,7 @@ Here you go.
 ```
 
 Available directive keys (when enabled):
+
 - `provider` (`openai` | `elevenlabs` | `edge`)
 - `voice` (OpenAI voice) or `voiceId` (ElevenLabs)
 - `model` (OpenAI TTS model or ElevenLabs model id)
@@ -295,6 +297,7 @@ Slash commands write local overrides to `prefsPath` (default:
 `messages.tts.prefsPath`).
 
 Stored fields:
+
 - `enabled`
 - `provider`
 - `maxLength` (summary threshold; default 1500 chars)
@@ -321,6 +324,7 @@ OpenAI/ElevenLabs formats are fixed; Telegram expects Opus for voice-note UX.
 ## Auto-TTS behavior
 
 When enabled, OpenClaw:
+
 - skips TTS if the reply already contains media or a `MEDIA:` directive.
 - skips very short replies (< 10 chars).
 - summarizes long replies when enabled using `agents.defaults.model.primary` (or `summaryModel`).
@@ -366,6 +370,7 @@ Discord note: `/tts` is a built-in Discord command, so OpenClaw registers
 ```
 
 Notes:
+
 - Commands require an authorized sender (allowlist/owner rules still apply).
 - `commands.text` or native command registration must be enabled.
 - `off|always|inbound|tagged` are per‑session toggles (`/tts on` is an alias for `/tts always`).
@@ -381,6 +386,7 @@ Telegram sends a voice bubble.
 ## Gateway RPC
 
 Gateway methods:
+
 - `tts.status`
 - `tts.enable`
 - `tts.disable`

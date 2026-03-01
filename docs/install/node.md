@@ -34,7 +34,7 @@ If `$(npm prefix -g)/bin` (macOS/Linux) or `$(npm prefix -g)` (Windows) is **not
 npm prefix -g
 ```
 
-2) Add the global npm bin directory to your shell startup file:
+1) Add the global npm bin directory to your shell startup file:
 
 - zsh: `~/.zshrc`
 - bash: `~/.bashrc`

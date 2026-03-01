@@ -23,6 +23,7 @@ Uses the Gateway auth configuration. Send a bearer token:
 - `Authorization: Bearer <token>`
 
 Notes:
+
 - When `gateway.auth.mode="token"`, use `gateway.auth.token` (or `OPENCLAW_GATEWAY_TOKEN`).
 - When `gateway.auth.mode="password"`, use `gateway.auth.password` (or `OPENCLAW_GATEWAY_PASSWORD`).
 
@@ -38,6 +39,7 @@ Or target a specific OpenClaw agent by header:
 - `x-openclaw-agent-id: <agentId>` (default: `main`)
 
 Advanced:
+
 - `x-openclaw-session-key: <sessionKey>` to fully control session routing.
 
 ## Enabling the endpoint
@@ -103,6 +105,7 @@ Accepted but **currently ignored**:
 ## Items (input)
 
 ### `message`
+
 Roles: `system`, `developer`, `user`, `assistant`.
 
 - `system` and `developer` are appended to the system prompt.
@@ -168,6 +171,7 @@ Allowed MIME types (current): `text/plain`, `text/markdown`, `text/html`, `text/
 Max size (current): 5MB.
 
 Current behavior:
+
 - File content is decoded and added to the **system prompt**, not the user message,
   so it stays ephemeral (not persisted in session history).
 - PDFs are parsed for text. If little text is found, the first pages are rasterized
@@ -177,6 +181,7 @@ PDF parsing uses the Node-friendly `pdfjs-dist` legacy build (no worker). The mo
 PDF.js build expects browser workers/DOM globals, so it is not used in the Gateway.
 
 URL fetch defaults:
+
 - `files.allowUrl`: `true`
 - `images.allowUrl`: `true`
 - Requests are guarded (DNS resolution, private IP blocking, redirect caps, timeouts).
@@ -221,6 +226,7 @@ Defaults can be tuned under `gateway.http.endpoints.responses`:
 ```
 
 Defaults when omitted:
+
 - `maxBodyBytes`: 20MB
 - `files.maxBytes`: 5MB
 - `files.maxChars`: 200k
@@ -242,6 +248,7 @@ Set `stream: true` to receive Server-Sent Events (SSE):
 - Stream ends with `data: [DONE]`
 
 Event types currently emitted:
+
 - `response.created`
 - `response.in_progress`
 - `response.output_item.added`
@@ -266,6 +273,7 @@ Errors use a JSON object like:
 ```
 
 Common cases:
+
 - `401` missing/invalid auth
 - `400` invalid request body
 - `405` wrong method
@@ -273,6 +281,7 @@ Common cases:
 ## Examples
 
 Non-streaming:
+
 ```bash
 curl -sS http://127.0.0.1:18789/v1/responses \
   -H 'Authorization: Bearer YOUR_TOKEN' \
@@ -285,6 +294,7 @@ curl -sS http://127.0.0.1:18789/v1/responses \
 ```
 
 Streaming:
+
 ```bash
 curl -N http://127.0.0.1:18789/v1/responses \
   -H 'Authorization: Bearer YOUR_TOKEN' \

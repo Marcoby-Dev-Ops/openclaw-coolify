@@ -9,12 +9,14 @@ read_when:
 OpenClaw can **summarize inbound media** (image/audio/video) before the reply pipeline runs. It auto‑detects when local tools or provider keys are available, and can be disabled or customized. If understanding is off, models still receive the original files/URLs as usual.
 
 ## Goals
+
 - Optional: pre‑digest inbound media into short text for faster routing + better command parsing.
 - Preserve original media delivery to the model (always).
 - Support **provider APIs** and **CLI fallbacks**.
 - Allow multiple models with ordered fallback (error/size/timeout).
 
 ## High‑level behavior
+
 1) Collect inbound attachments (`MediaPaths`, `MediaUrls`, `MediaTypes`).
 2) For each enabled capability (image/audio/video), select attachments per policy (default: **first**).
 3) Choose the first eligible model entry (size + capability + auth).  
@@ -28,7 +30,9 @@ OpenClaw can **summarize inbound media** (image/audio/video) before the reply pi
 If understanding fails or is disabled, **the reply flow continues** with the original body + attachments.
 
 ## Config overview
+
 `tools.media` supports **shared models** plus per‑capability overrides:
+
 - `tools.media.models`: shared model list (use `capabilities` to gate).
 - `tools.media.image` / `tools.media.audio` / `tools.media.video`:
   - defaults (`prompt`, `maxChars`, `maxBytes`, `timeoutSeconds`, `language`)
@@ -53,6 +57,7 @@ If understanding fails or is disabled, **the reply flow continues** with the ori
 ```
 
 ### Model entries
+
 Each `models[]` entry can be **provider** or **CLI**:
 
 ```json5
@@ -89,12 +94,15 @@ Each `models[]` entry can be **provider** or **CLI**:
 ```
 
 CLI templates can also use:
+
 - `{{MediaDir}}` (directory containing the media file)
 - `{{OutputDir}}` (scratch dir created for this run)
 - `{{OutputBase}}` (scratch file base path, no extension)
 
 ## Defaults and limits
+
 Recommended defaults:
+
 - `maxChars`: **500** for image/video (short, command‑friendly)
 - `maxChars`: **unset** for audio (full transcript unless you set a limit)
 - `maxBytes`:
@@ -103,6 +111,7 @@ Recommended defaults:
   - video: **50MB**
 
 Rules:
+
 - If media exceeds `maxBytes`, that model is skipped and the **next model is tried**.
 - If the model returns more than `maxChars`, output is trimmed.
 - `prompt` defaults to simple “Describe the {media}.” plus the `maxChars` guidance (image/video only).
@@ -110,6 +119,7 @@ Rules:
   **active reply model** when its provider supports the capability.
 
 ### Auto-detect media understanding (default)
+
 If `tools.media.<capability>.enabled` is **not** set to `false` and you haven’t
 configured models, OpenClaw auto-detects in this order and **stops at the first
 working option**:
@@ -125,6 +135,7 @@ working option**:
    - Video: Google
 
 To disable auto-detection, set:
+
 ```json5
 {
   tools: {
@@ -136,11 +147,14 @@ To disable auto-detection, set:
   }
 }
 ```
+
 Note: Binary detection is best-effort across macOS/Linux/Windows; ensure the CLI is on `PATH` (we expand `~`), or set an explicit CLI model with a full command path.
 
 ## Capabilities (optional)
+
 If you set `capabilities`, the entry only runs for those media types. For shared
 lists, OpenClaw can infer defaults:
+
 - `openai`, `anthropic`, `minimax`: **image**
 - `google` (Gemini API): **image + audio + video**
 - `groq`: **audio**
@@ -150,6 +164,7 @@ For CLI entries, **set `capabilities` explicitly** to avoid surprising matches.
 If you omit `capabilities`, the entry is eligible for the list it appears in.
 
 ## Provider support matrix (OpenClaw integrations)
+
 | Capability | Provider integration | Notes |
 |------------|----------------------|-------|
 | Image | OpenAI / Anthropic / Google / others via `pi-ai` | Any image-capable model in the registry works. |
@@ -157,21 +172,27 @@ If you omit `capabilities`, the entry is eligible for the list it appears in.
 | Video | Google (Gemini API) | Provider video understanding. |
 
 ## Recommended providers
+
 **Image**
+
 - Prefer your active model if it supports images.
 - Good defaults: `openai/gpt-5.2`, `anthropic/claude-opus-4-5`, `google/gemini-3-pro-preview`.
 
 **Audio**
+
 - `openai/gpt-4o-mini-transcribe`, `groq/whisper-large-v3-turbo`, or `deepgram/nova-3`.
 - CLI fallback: `whisper-cli` (whisper-cpp) or `whisper`.
 - Deepgram setup: [Deepgram (audio transcription)](/providers/deepgram).
 
 **Video**
+
 - `google/gemini-3-flash-preview` (fast), `google/gemini-3-pro-preview` (richer).
 - CLI fallback: `gemini` CLI (supports `read_file` on video/audio).
 
 ## Attachment policy
+
 Per‑capability `attachments` controls which attachments are processed:
+
 - `mode`: `first` (default) or `all`
 - `maxAttachments`: cap the number processed (default **1**)
 - `prefer`: `first`, `last`, `path`, `url`
@@ -181,6 +202,7 @@ When `mode: "all"`, outputs are labeled `[Image 1/2]`, `[Audio 2/2]`, etc.
 ## Config examples
 
 ### 1) Shared models list + overrides
+
 ```json5
 {
   tools: {
@@ -213,6 +235,7 @@ When `mode: "all"`, outputs are labeled `[Image 1/2]`, `[Audio 2/2]`, etc.
 ```
 
 ### 2) Audio + Video only (image off)
+
 ```json5
 {
   tools: {
@@ -252,6 +275,7 @@ When `mode: "all"`, outputs are labeled `[Image 1/2]`, `[Audio 2/2]`, etc.
 ```
 
 ### 3) Optional image understanding
+
 ```json5
 {
   tools: {
@@ -282,6 +306,7 @@ When `mode: "all"`, outputs are labeled `[Image 1/2]`, `[Audio 2/2]`, etc.
 ```
 
 ### 4) Multi‑modal single entry (explicit capabilities)
+
 ```json5
 {
   tools: {
@@ -295,6 +320,7 @@ When `mode: "all"`, outputs are labeled `[Image 1/2]`, `[Audio 2/2]`, etc.
 ```
 
 ## Status output
+
 When media understanding runs, `/status` includes a short summary line:
 
 ```
@@ -304,10 +330,12 @@ When media understanding runs, `/status` includes a short summary line:
 This shows per‑capability outcomes and the chosen provider/model when applicable.
 
 ## Notes
+
 - Understanding is **best‑effort**. Errors do not block replies.
 - Attachments are still passed to models even when understanding is disabled.
 - Use `scope` to limit where understanding runs (e.g. only DMs).
 
 ## Related docs
+
 - [Configuration](/gateway/configuration)
 - [Image & Media Support](/nodes/images)

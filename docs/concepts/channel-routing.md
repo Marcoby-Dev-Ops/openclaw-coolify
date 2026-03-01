@@ -5,7 +5,6 @@ read_when:
 ---
 # Channels & routing
 
-
 OpenClaw routes replies **back to the channel where a message came from**. The
 model does not choose a channel; routing is deterministic and controlled by the
 host configuration.
@@ -108,6 +107,7 @@ agent in one place.
 ## Reply context
 
 Inbound replies include:
+
 - `ReplyToId`, `ReplyToBody`, and `ReplyToSender` when available.
 - Quoted context is appended to `Body` as a `[Replying to ...]` block.
 

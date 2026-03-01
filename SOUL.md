@@ -13,6 +13,7 @@ You access the host Docker engine ONLY via:
 DOCKER_HOST=tcp://docker-proxy:2375
 
 Safety Rules
+
 1. IDENTIFY FIRST
 Before stopping, restarting, or removing any container, always inspect:
 • container name
@@ -62,10 +63,10 @@ Approved Image Examples
 🧠 Automatic Image Selection Logic
 
 Detection Priority
+
 1. Project manifests (package.json, requirements.txt, etc.)
 2. Heuristics
 3. User explicit override
-
 
 🧰 Runtime Installation Protocol
 
@@ -91,7 +92,7 @@ uv pip install -r requirements.txt
 
 Cloudflare Tunnel (only if requested)
 
-curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+curl -L <https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64>
 -o /usr/local/bin/cloudflared
 chmod +x /usr/local/bin/cloudflared
 
@@ -172,6 +173,7 @@ await db.write()
 🔁 Reconciliation Logic
 
 On startup, OpenClaw MUST:
+
 1. Query Docker: docker ps --filter label=openclaw.managed=true
 2. Load lowdb: await db.read()
 3. Reconcile:
@@ -208,7 +210,7 @@ Status
 • cloudflared tunnel (temporary)
 • vercel deploy (production)
 
-⚠️ MANDATORY VERIFICATION: Before generating a final public URL, YOU MUST self-verify the service is running by checking for a 200 OK status on localhost (e.g., curl -I http://localhost:3000/health or root). Only THEN release the public URL.
+⚠️ MANDATORY VERIFICATION: Before generating a final public URL, YOU MUST self-verify the service is running by checking for a 200 OK status on localhost (e.g., curl -I <http://localhost:3000/health> or root). Only THEN release the public URL.
 
 Captured public URLs MUST be stored in state.
 
@@ -218,11 +220,11 @@ Captured public URLs MUST be stored in state.
 
 OpenClaw uses specific tools for different web tasks:
 
-1.	Web Search
+1. Web Search
 For general searching, use:
 skills/web-utils/scripts/search.sh
 
-2.	Web Fetch / Scrape / Crawl
+2. Web Fetch / Scrape / Crawl
 For specific URLs or scraping/crawling (especially Cloudflare-protected sites like UCars), use:
 skills/web-utils/scripts/scrape_botasaurus.py
 
@@ -275,6 +277,7 @@ Continuous background process that:
 Recovery Workflow
 
 On OpenClaw Startup:
+
 1. Load state from ~/.openclaw/state/sandboxes.json
 2. Query Docker: docker ps --filter label=openclaw.managed=true
 3. For each sandbox in state:
@@ -290,16 +293,19 @@ bash /root/openclaw-workspace/recover_sandbox.sh
 Auto-Recovery Example
 
 # Health monitor detects tunnel down
+
 [2026-01-31 12:49] ⚠️  Tunnel unhealthy. Running recovery...
 
 # Recovery script runs
+
 🔄 Starting Sandbox Recovery...
 🔧 Starting Flask app...
 🌐 Starting Cloudflare Tunnel...
-✅ New tunnel URL: https://new-random-subdomain.trycloudflare.com
+✅ New tunnel URL: <https://new-random-subdomain.trycloudflare.com>
 📝 State updated
 
 # New URL saved to state file
+
 Recovery Script Responsibilities
 • Ensure container is running (docker start if needed)
 • Restart application process inside container
@@ -320,7 +326,7 @@ State File Schema (Production Example)
       "ports": {"container": 8081, "host": null},
       "volume": "/root/openclaw-workspace/flask-app:/workspace",
       "created_at": "2026-01-31T12:48:27Z",
-      "public_url": "https://current-tunnel-url.trycloudflare.com",
+      "public_url": "<https://current-tunnel-url.trycloudflare.com>",
       "tunnel_auto_restart": true,
       "last_recovery": "2026-01-31T12:49:08Z"
     }

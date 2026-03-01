@@ -11,12 +11,14 @@ Voice calls for OpenClaw via a plugin. Supports outbound notifications and
 multi-turn conversations with inbound policies.
 
 Current providers:
+
 - `twilio` (Programmable Voice + Media Streams)
 - `telnyx` (Call Control v2)
 - `plivo` (Voice API + XML transfer + GetInput speech)
 - `mock` (dev/no network)
 
 Quick mental model:
+
 - Install plugin
 - Restart Gateway
 - Configure under `plugins.entries.voice-call.config`
@@ -99,6 +101,7 @@ Set config under `plugins.entries.voice-call.config`:
 ```
 
 Notes:
+
 - Twilio/Telnyx require a **publicly reachable** webhook URL.
 - Plivo requires a **publicly reachable** webhook URL.
 - `mock` is a local dev provider (no network calls).
@@ -126,6 +129,7 @@ streaming speech on calls. You can override it under the plugin config with the
 ```
 
 Notes:
+
 - **Edge TTS is ignored for voice calls** (telephony audio needs PCM; Edge output is unreliable).
 - Core TTS is used when Twilio media streaming is enabled; otherwise calls fall back to provider native voices.
 
@@ -201,6 +205,7 @@ Inbound policy defaults to `disabled`. To enable inbound calls, set:
 ```
 
 Auto-responses use the agent system. Tune with:
+
 - `responseModel`
 - `responseSystemPrompt`
 - `responseTimeoutMs`
@@ -222,6 +227,7 @@ openclaw voicecall expose --mode funnel
 Tool name: `voice_call`
 
 Actions:
+
 - `initiate_call` (message, to?, mode?)
 - `continue_call` (callId, message)
 - `speak_to_user` (callId, message)

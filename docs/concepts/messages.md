@@ -21,6 +21,7 @@ Inbound message
 ```
 
 Key knobs live in configuration:
+
 - `messages.*` for prefixes, queueing, and group behavior.
 - `agents.defaults.*` for block streaming and chunking defaults.
 - Channel overrides (`channels.whatsapp.*`, `channels.telegram.*`, etc.) for caps and streaming toggles.
@@ -40,6 +41,7 @@ agent turn via `messages.inbound`. Debouncing is scoped per channel + conversati
 and uses the most recent message for reply threading/IDs.
 
 Config (global default + per-channel overrides):
+
 ```json5
 {
   messages: {
@@ -56,12 +58,14 @@ Config (global default + per-channel overrides):
 ```
 
 Notes:
+
 - Debounce applies to **text-only** messages; media/attachments flush immediately.
 - Control commands bypass debouncing so they remain standalone.
 
 ## Sessions and devices
 
 Sessions are owned by the gateway, not by clients.
+
 - Direct chats collapse into the agent main session key.
 - Groups/channels get their own session keys.
 - The session store and transcripts live on the gateway host.
@@ -76,12 +80,14 @@ Details: [Session management](/concepts/session).
 ## Inbound bodies and history context
 
 OpenClaw separates the **prompt body** from the **command body**:
+
 - `Body`: prompt text sent to the agent. This may include channel envelopes and
   optional history wrappers.
 - `CommandBody`: raw user text for directive/command parsing.
 - `RawBody`: legacy alias for `CommandBody` (kept for compatibility).
 
 When a channel supplies history, it uses a shared wrapper:
+
 - `[Chat messages since your last reply - for context]`
 - `[Current message - respond to this]`
 
@@ -116,6 +122,7 @@ Block streaming sends partial replies as the model produces text blocks.
 Chunking respects channel text limits and avoids splitting fenced code.
 
 Key settings:
+
 - `agents.defaults.blockStreamingDefault` (`on|off`, default off)
 - `agents.defaults.blockStreamingBreak` (`text_end|message_end`)
 - `agents.defaults.blockStreamingChunk` (`minChars|maxChars|breakPreference`)
@@ -128,6 +135,7 @@ Details: [Streaming + chunking](/concepts/streaming).
 ## Reasoning visibility and tokens
 
 OpenClaw can expose or hide model reasoning:
+
 - `/reasoning on|off|stream` controls visibility.
 - Reasoning content still counts toward token usage when produced by the model.
 - Telegram supports reasoning stream into the draft bubble.
@@ -137,6 +145,7 @@ Details: [Thinking + reasoning directives](/tools/thinking) and [Token use](/tok
 ## Prefixes, threading, and replies
 
 Outbound message formatting is centralized in `messages`:
+
 - `messages.responsePrefix` (outbound prefix) and `channels.whatsapp.messagePrefix` (WhatsApp inbound prefix)
 - Reply threading via `replyToMode` and per-channel defaults
 

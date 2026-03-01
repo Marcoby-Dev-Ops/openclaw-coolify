@@ -83,7 +83,7 @@ re-caching the full prompt, reducing cache write costs.
 For Anthropic API pricing, cache reads are significantly cheaper than input
 tokens, while cache writes are billed at a higher multiplier. See Anthropic’s
 prompt caching pricing for the latest rates and TTL multipliers:
-https://docs.anthropic.com/docs/build-with-claude/prompt-caching
+<https://docs.anthropic.com/docs/build-with-claude/prompt-caching>
 
 ### Example: keep 1h cache warm with heartbeat
 

@@ -23,6 +23,7 @@ The design goal is to keep all network discovery/advertising in the **Node Gatew
 - **Legacy TCP bridge (deprecated/removed)**: older node transport (see [Bridge protocol](/gateway/bridge-protocol)); no longer advertised for discovery.
 
 Protocol details:
+
 - [Gateway protocol](/gateway/protocol)
 - [Bridge protocol (legacy)](/gateway/bridge-protocol)
 
@@ -44,6 +45,7 @@ Protocol details:
 Bonjour is best-effort and does not cross networks. It is only used for “same LAN” convenience.
 
 Target direction:
+
 - The **gateway** advertises its WS endpoint via Bonjour.
 - Clients browse and show a “pick a gateway” list, then store the chosen endpoint.
 
@@ -65,6 +67,7 @@ Troubleshooting and beacon details: [Bonjour](/gateway/bonjour).
   - `tailnetDns=<magicdns>` (optional hint; auto-detected when Tailscale is available)
 
 Disable/override:
+
 - `OPENCLAW_DISABLE_BONJOUR=1` disables advertising.
 - `gateway.bind` in `~/.openclaw/openclaw.json` controls the Gateway bind mode.
 - `OPENCLAW_SSH_PORT` overrides the SSH port advertised in TXT (defaults to 22).
@@ -74,6 +77,7 @@ Disable/override:
 ### 2) Tailnet (cross-network)
 
 For London/Vienna style setups, Bonjour won’t help. The recommended “direct” target is:
+
 - Tailscale MagicDNS name (preferred) or a stable tailnet IP.
 
 If the gateway can detect it is running under Tailscale, it publishes `tailnetDns` as an optional hint for clients (including wide-area beacons).

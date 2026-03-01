@@ -105,21 +105,25 @@ openclaw onboard --auth-choice setup-token
 ## Troubleshooting
 
 **401 errors / token suddenly invalid**
+
 - Claude subscription auth can expire or be revoked. Re-run `claude setup-token`
   and paste it into the **gateway host**.
 - If the Claude CLI login lives on a different machine, use
   `openclaw models auth paste-token --provider anthropic` on the gateway host.
 
 **No API key found for provider "anthropic"**
+
 - Auth is **per agent**. New agents don’t inherit the main agent’s keys.
 - Re-run onboarding for that agent, or paste a setup-token / API key on the
   gateway host, then verify with `openclaw models status`.
 
 **No credentials found for profile `anthropic:default`**
+
 - Run `openclaw models status` to see which auth profile is active.
 - Re-run onboarding, or paste a setup-token / API key for that profile.
 
 **No available auth profile (all in cooldown/unavailable)**
+
 - Check `openclaw models status --json` for `auth.unusableProfiles`.
 - Add another Anthropic profile or wait for cooldown.
 

@@ -112,6 +112,7 @@ launchctl bootstrap gui/$UID ~/Library/LaunchAgents/bot.molt.ssh-tunnel.plist
 ```
 
 The tunnel will now:
+
 - Start automatically when you log in
 - Restart if it crashes
 - Keep running in the background

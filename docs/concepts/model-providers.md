@@ -132,13 +132,14 @@ Moonshot uses OpenAI-compatible endpoints, so configure it as a custom provider:
 - Auth: `MOONSHOT_API_KEY`
 - Example model: `moonshot/kimi-k2.5`
 - Kimi K2 model IDs:
-  {/* moonshot-kimi-k2-model-refs:start */}
+  {/*moonshot-kimi-k2-model-refs:start*/}
   - `moonshot/kimi-k2.5`
   - `moonshot/kimi-k2-0905-preview`
   - `moonshot/kimi-k2-turbo-preview`
   - `moonshot/kimi-k2-thinking`
   - `moonshot/kimi-k2-thinking-turbo`
-  {/* moonshot-kimi-k2-model-refs:end */}
+  {/*moonshot-kimi-k2-model-refs:end*/}
+
 ```json5
 {
   agents: {
@@ -197,6 +198,7 @@ openclaw models auth login --provider qwen-portal --set-default
 ```
 
 Model refs:
+
 - `qwen-portal/coder-model`
 - `qwen-portal/vision-model`
 
@@ -246,7 +248,7 @@ Ollama is a local LLM runtime that provides an OpenAI-compatible API:
 - Provider: `ollama`
 - Auth: None required (local server)
 - Example model: `ollama/llama3.3`
-- Installation: https://ollama.ai
+- Installation: <https://ollama.ai>
 
 ```bash
 # Install Ollama, then pull a model:
@@ -299,6 +301,7 @@ Example (OpenAI‑compatible):
 ```
 
 Notes:
+
 - For custom providers, `reasoning`, `input`, `cost`, `contextWindow`, and `maxTokens` are optional.
   When omitted, OpenClaw defaults to:
   - `reasoning: false`

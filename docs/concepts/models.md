@@ -21,6 +21,7 @@ OpenClaw selects models in this order:
    next model.
 
 Related:
+
 - `agents.defaults.models` is the allowlist/catalog of models OpenClaw can use (plus aliases).
 - `agents.defaults.imageModel` is used **only when** the primary model can’t accept images.
 - Per-agent defaults can override `agents.defaults.model` via `agents.list[].model` plus bindings (see [/concepts/multi-agent](/concepts/multi-agent)).
@@ -99,6 +100,7 @@ You can switch models for the current session without restarting:
 ```
 
 Notes:
+
 - `/model` (and `/model list`) is a compact, numbered picker (model family + available providers).
 - `/model <#>` selects from that picker.
 - `/model status` is the detailed view (auth candidates and, when configured, provider endpoint `baseUrl` + `api` mode).
@@ -181,12 +183,14 @@ Probing requires an OpenRouter API key (from auth profiles or
 `OPENROUTER_API_KEY`). Without a key, use `--no-probe` to list candidates only.
 
 Scan results are ranked by:
+
 1) Image support
 2) Tool latency
 3) Context size
 4) Parameter count
 
 Input
+
 - OpenRouter `/models` list (filter `:free`)
 - Requires OpenRouter API key from auth profiles or `OPENROUTER_API_KEY` (see [/environment](/environment))
 - Optional filters: `--max-age-days`, `--min-params`, `--provider`, `--max-candidates`

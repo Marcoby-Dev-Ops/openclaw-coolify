@@ -22,6 +22,7 @@ per-session workspaces under `agents.defaults.sandbox.workspaceRoot` (see
 ## Bootstrap files (injected)
 
 Inside `agents.defaults.workspace`, OpenClaw expects these user-editable files:
+
 - `AGENTS.md` — operating instructions + “memory”
 - `SOUL.md` — persona, boundaries, tone
 - `TOOLS.md` — user-maintained tool notes (e.g. `imsg`, `sag`, conventions)
@@ -53,6 +54,7 @@ guidance for how *you* want them used.
 ## Skills
 
 OpenClaw loads skills from three locations (workspace wins on name conflict):
+
 - Bundled (shipped with the install)
 - Managed/local: `~/.openclaw/skills`
 - Workspace: `<workspace>/skills`
@@ -69,6 +71,7 @@ OpenClaw reuses pieces of the p-mono codebase (models/tools), but **session mana
 ## Sessions
 
 Session transcripts are stored as JSONL at:
+
 - `~/.openclaw/agents/<agentId>/sessions/<SessionId>.jsonl`
 
 The session ID is stable and chosen by OpenClaw.
@@ -109,6 +112,7 @@ Model refs in config (for example `agents.defaults.model` and `agents.defaults.m
 ## Configuration (minimal)
 
 At minimum, set:
+
 - `agents.defaults.workspace`
 - `channels.whatsapp.allowFrom` (strongly recommended)
 

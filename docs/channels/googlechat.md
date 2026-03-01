@@ -8,6 +8,7 @@ read_when:
 Status: ready for DMs + spaces via Google Chat API webhooks (HTTP only).
 
 ## Quick setup (beginner)
+
 1) Create a Google Cloud project and enable the **Google Chat API**.
    - Go to: [Google Chat API Credentials](https://console.cloud.google.com/apis/api/chat.googleapis.com/credentials)
    - Enable the API if it is not already enabled.
@@ -47,7 +48,9 @@ Status: ready for DMs + spaces via Google Chat API webhooks (HTTP only).
 9) Start the gateway. Google Chat will POST to your webhook path.
 
 ## Add to Google Chat
+
 Once the gateway is running and your email is added to the visibility list:
+
 1) Go to [Google Chat](https://chat.google.com/).
 2) Click the **+** (plus) icon next to **Direct Messages**.
 3) In the search bar (where you usually add people), type the **App name** you configured in the Google Cloud Console.
@@ -57,18 +60,23 @@ Once the gateway is running and your email is added to the visibility list:
 6) Send "Hello" to trigger the assistant!
 
 ## Public URL (Webhook-only)
+
 Google Chat webhooks require a public HTTPS endpoint. For security, **only expose the `/googlechat` path** to the internet. Keep the OpenClaw dashboard and other sensitive endpoints on your private network.
 
 ### Option A: Tailscale Funnel (Recommended)
+
 Use Tailscale Serve for the private dashboard and Funnel for the public webhook path. This keeps `/` private while exposing only `/googlechat`.
 
 1. **Check what address your gateway is bound to:**
+
    ```bash
    ss -tlnp | grep 18789
    ```
+
    Note the IP address (e.g., `127.0.0.1`, `0.0.0.0`, or your Tailscale IP like `100.x.x.x`).
 
 2. **Expose the dashboard to the tailnet only (port 8443):**
+
    ```bash
    # If bound to localhost (127.0.0.1 or 0.0.0.0):
    tailscale serve --bg --https 8443 http://127.0.0.1:18789
@@ -78,6 +86,7 @@ Use Tailscale Serve for the private dashboard and Funnel for the public webhook 
    ```
 
 3. **Expose only the webhook path publicly:**
+
    ```bash
    # If bound to localhost (127.0.0.1 or 0.0.0.0):
    tailscale funnel --bg --set-path /googlechat http://127.0.0.1:18789/googlechat
@@ -90,6 +99,7 @@ Use Tailscale Serve for the private dashboard and Funnel for the public webhook 
    If prompted, visit the authorization URL shown in the output to enable Funnel for this node in your tailnet policy.
 
 5. **Verify the configuration:**
+
    ```bash
    tailscale serve status
    tailscale funnel status
@@ -106,16 +116,21 @@ Use the public URL (without `:8443`) in the Google Chat app config.
 > Note: This configuration persists across reboots. To remove it later, run `tailscale funnel reset` and `tailscale serve reset`.
 
 ### Option B: Reverse Proxy (Caddy)
+
 If you use a reverse proxy like Caddy, only proxy the specific path:
+
 ```caddy
 your-domain.com {
     reverse_proxy /googlechat* localhost:18789
 }
 ```
+
 With this config, any request to `your-domain.com/` will be ignored or returned as 404, while `your-domain.com/googlechat` is safely routed to OpenClaw.
 
 ### Option C: Cloudflare Tunnel
+
 Configure your tunnel's ingress rules to only route the webhook path:
+
 - **Path**: `/googlechat` -> `http://localhost:18789/googlechat`
 - **Default Rule**: HTTP 404 (Not Found)
 
@@ -133,11 +148,14 @@ Configure your tunnel's ingress rules to only route the webhook path:
 5. Group spaces require @-mention by default. Use `botUser` if mention detection needs the app’s user name.
 
 ## Targets
+
 Use these identifiers for delivery and allowlists:
+
 - Direct messages: `users/<userId>` or `users/<email>` (email addresses are accepted).
 - Spaces: `spaces/<spaceId>`.
 
 ## Config highlights
+
 ```json5
 {
   channels: {
@@ -170,6 +188,7 @@ Use these identifiers for delivery and allowlists:
 ```
 
 Notes:
+
 - Service account credentials can also be passed inline with `serviceAccount` (JSON string).
 - Default webhook path is `/googlechat` if `webhookPath` isn’t set.
 - Reactions are available via the `reactions` tool and `channels action` when `actions.reactions` is enabled.
@@ -179,42 +198,53 @@ Notes:
 ## Troubleshooting
 
 ### 405 Method Not Allowed
+
 If Google Cloud Logs Explorer shows errors like:
+
 ```
 status code: 405, reason phrase: HTTP error response: HTTP/1.1 405 Method Not Allowed
 ```
 
 This means the webhook handler isn't registered. Common causes:
+
 1. **Channel not configured**: The `channels.googlechat` section is missing from your config. Verify with:
+
    ```bash
    openclaw config get channels.googlechat
    ```
+
    If it returns "Config path not found", add the configuration (see [Config highlights](#config-highlights)).
 
 2. **Plugin not enabled**: Check plugin status:
+
    ```bash
    openclaw plugins list | grep googlechat
    ```
+
    If it shows "disabled", add `plugins.entries.googlechat.enabled: true` to your config.
 
 3. **Gateway not restarted**: After adding config, restart the gateway:
+
    ```bash
    openclaw gateway restart
    ```
 
 Verify the channel is running:
+
 ```bash
 openclaw channels status
 # Should show: Google Chat default: enabled, configured, ...
 ```
 
 ### Other issues
+
 - Check `openclaw channels status --probe` for auth errors or missing audience config.
 - If no messages arrive, confirm the Chat app's webhook URL + event subscriptions.
 - If mention gating blocks replies, set `botUser` to the app's user resource name and verify `requireMention`.
 - Use `openclaw logs --follow` while sending a test message to see if requests reach the gateway.
 
 Related docs:
+
 - [Gateway configuration](/gateway/configuration)
 - [Security](/gateway/security)
 - [Reactions](/tools/reactions)

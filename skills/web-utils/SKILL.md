@@ -24,19 +24,25 @@ This skill provides advanced capabilities for interacting with the web.
 ## Actions
 
 ### Web Search (SearXNG)
+
 Search the web using a private SearXNG instance. Returns JSON results.
+
 ```bash
 {baseDir}/scripts/search.sh "query string"
 ```
 
 ### Summarize Strategy
+
 Summarize the content of a URL (text or video) using AI.
+
 ```bash
 {baseDir}/scripts/summarize.sh "https://example.com/article"
 ```
 
 ### Advanced Scrape
+
 Fetch web content. Supports basic `curl`, `browser` (Headless Chromium), or `botasaurus` logic.
+
 ```bash
 # Basic (fast)
 {baseDir}/scripts/scrape.sh --mode curl "https://example.com"

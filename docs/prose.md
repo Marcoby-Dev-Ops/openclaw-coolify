@@ -9,7 +9,7 @@ read_when:
 
 OpenProse is a portable, markdown-first workflow format for orchestrating AI sessions. In OpenClaw it ships as a plugin that installs an OpenProse skill pack plus a `/prose` slash command. Programs live in `.prose` files and can spawn multiple sub-agents with explicit control flow.
 
-Official site: https://www.prose.md
+Official site: <https://www.prose.md>
 
 ## What it can do
 
@@ -104,6 +104,7 @@ OpenProse supports multiple state backends:
 - **postgres** (experimental): requires `psql` and a connection string
 
 Notes:
+
 - sqlite/postgres are opt-in and experimental.
 - postgres credentials flow into subagent logs; use a dedicated, least-privileged DB.
 
