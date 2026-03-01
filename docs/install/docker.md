@@ -244,9 +244,10 @@ precedence, and troubleshooting.
 
 - Image: `openclaw-sandbox:bookworm-slim`
 - One container per agent
-- Agent workspace access: `workspaceAccess: "none"` (default) uses `~/.openclaw/sandboxes`
+- Agent workspace access: `workspaceAccess: "rw"` (default for dedicated agent runtimes)
+  - `"rw"` mounts the agent workspace read/write at `/workspace` (recommended for agent-exclusive runtimes)
   - `"ro"` keeps the sandbox workspace at `/workspace` and mounts the agent workspace read-only at `/agent` (disables `write`/`edit`/`apply_patch`)
-  - `"rw"` mounts the agent workspace read/write at `/workspace`
+  - `"none"` uses `~/.openclaw/sandboxes` (for restricted/shared access)
 - Auto-prune: idle > 24h OR age > 7d
 - Network: `none` by default (explicitly opt-in if you need egress)
 - Default allow: `exec`, `process`, `read`, `write`, `edit`, `sessions_list`, `sessions_history`, `sessions_send`, `sessions_spawn`, `session_status`

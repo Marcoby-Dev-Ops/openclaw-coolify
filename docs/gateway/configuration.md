@@ -2164,10 +2164,10 @@ Details: [Sandboxing](/gateway/sandboxing)
 Defaults (if enabled):
 - scope: `"agent"` (one container + workspace per agent)
 - Debian bookworm-slim based image
-- agent workspace access: `workspaceAccess: "none"` (default)
-  - `"none"`: use a per-scope sandbox workspace under `~/.openclaw/sandboxes`
-- `"ro"`: keep the sandbox workspace at `/workspace`, and mount the agent workspace read-only at `/agent` (disables `write`/`edit`/`apply_patch`)
-  - `"rw"`: mount the agent workspace read/write at `/workspace`
+- agent workspace access: `workspaceAccess: "rw"` (default for dedicated agent runtimes)
+  - `"rw"`: mount the agent workspace read/write at `/workspace` (recommended for agent-exclusive runtimes)
+  - `"ro"`: keep the sandbox workspace at `/workspace`, and mount the agent workspace read-only at `/agent` (disables `write`/`edit`/`apply_patch`)
+  - `"none"`: use a per-scope sandbox workspace under `~/.openclaw/sandboxes` (for restricted/shared access)
 - auto-prune: idle > 24h OR age > 7d
 - tool policy: allow only `exec`, `process`, `read`, `write`, `edit`, `apply_patch`, `sessions_list`, `sessions_history`, `sessions_send`, `sessions_spawn`, `session_status` (deny wins)
   - configure via `tools.sandbox.tools`, override per-agent via `agents.list[].tools.sandbox.tools`
@@ -2191,7 +2191,7 @@ For package installs, ensure network egress, a writable root FS, and a root user
       sandbox: {
         mode: "non-main", // off | non-main | all
         scope: "agent", // session | agent | shared (agent is default)
-        workspaceAccess: "none", // none | ro | rw
+        workspaceAccess: "rw", // none | ro | rw (rw is default for agent-exclusive runtimes)
         workspaceRoot: "~/.openclaw/sandboxes",
         docker: {
           image: "openclaw-sandbox:bookworm-slim",
