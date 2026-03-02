@@ -286,6 +286,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
           "sessions_send",
           "sessions_spawn",
           "session_status",
+          "create_integration_from_url",
           "nexus_*"
         ]
       }
@@ -307,6 +308,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
       "sandbox": {
         "mode": "non-main",
         "scope": "session",
+        "workspaceAccess": "${OPENCLAW_AGENTS_DEFAULTS_SANDBOX_WORKSPACEACCESS:-none}",
         "browser": {
           "enabled": true
         }
@@ -314,7 +316,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
     },
     "list": [
       { "id": "main", "name": "default", "workspace": "${OPENCLAW_WORKSPACE:-/data/openclaw-workspace}"},
-      { "id": "nexus", "default": true, "name": "Nexus Assistant", "workspace": "$NEXUS_WORKSPACE_DIR", "sandbox": { "mode": "off" }, "tools": { "profile": "minimal", "allow": ["nexus_*"] } }
+      { "id": "nexus", "default": true, "name": "Nexus Assistant", "workspace": "$NEXUS_WORKSPACE_DIR", "sandbox": { "mode": "${OPENCLAW_NEXUS_AGENT_SANDBOX_MODE:-off}" }, "tools": { "profile": "full" } }
     ]
   }
 }
@@ -362,13 +364,16 @@ if [ -f "$CONFIG_FILE" ]; then
        --arg or_key "${OPENROUTER_API_KEY:-$OPENCLAW_DEFAULT_OPENROUTER_KEY}" \
        --arg nexus_workspace "$NEXUS_WORKSPACE_DIR" \
        --arg nexus_plugin_available "$NEXUS_TOOLBRIDGE_AVAILABLE" \
+       --arg sandbox_workspace_access "${OPENCLAW_AGENTS_DEFAULTS_SANDBOX_WORKSPACEACCESS:-none}" \
+       --arg nexus_sandbox_mode "${OPENCLAW_NEXUS_AGENT_SANDBOX_MODE:-off}" \
+       --arg nexus_sandbox_scope "${OPENCLAW_NEXUS_AGENT_SANDBOX_SCOPE:-session}" \
        --arg force_defaults "${FORCE_MODEL_DEFAULTS:-0}" \
        '
          def with_or_without_nexus_tool(base):
            if $nexus_plugin_available == "true" then
-             (base + ["nexus_*"] | unique)
+             (base + ["nexus_*", "create_integration_from_url"] | unique)
            else
-             (base | map(select(. != "nexus_*")) | unique)
+             (base | map(select(. != "nexus_*" and . != "create_integration_from_url")) | unique)
            end;
          
          # 🛠️ Selective Model Enforcement (v0.8.2)
@@ -407,6 +412,7 @@ if [ -f "$CONFIG_FILE" ]; then
          | del(.plugins.entries."google-antigravity-auth")
          # Memory Search (enabled only; provider/model are managed by openclaw internally)
          | .agents.defaults.memorySearch.enabled = true
+         | .agents.defaults.sandbox.workspaceAccess = $sandbox_workspace_access
          # Skills allowlist - allow all bundled skills
          | .skills.allowBundled = ["*"]
          # Ensure the models requested in defaults are actually mapped in the models config
@@ -451,7 +457,17 @@ if [ -f "$CONFIG_FILE" ]; then
                      "default": true,
                      "name": "Nexus Assistant",
                      "workspace": $nexus_workspace,
-                     "sandbox": { "mode": "non-main", "scope": "session" },
+                     "sandbox": (
+                       if $nexus_sandbox_mode == "off" then
+                         { "mode": "off" }
+                       else
+                         {
+                           "mode": $nexus_sandbox_mode,
+                           "scope": $nexus_sandbox_scope,
+                           "workspaceAccess": $sandbox_workspace_access
+                         }
+                       end
+                     ),
                      "tools": { "profile": "full" }
                    }
                  else .
@@ -464,7 +480,17 @@ if [ -f "$CONFIG_FILE" ]; then
                    "default": true,
                    "name": "Nexus Assistant",
                    "workspace": $nexus_workspace,
-                   "sandbox": { "mode": "non-main", "scope": "session" },
+                   "sandbox": (
+                     if $nexus_sandbox_mode == "off" then
+                       { "mode": "off" }
+                     else
+                       {
+                         "mode": $nexus_sandbox_mode,
+                         "scope": $nexus_sandbox_scope,
+                         "workspaceAccess": $sandbox_workspace_access
+                       }
+                     end
+                   ),
                    "tools": { "profile": "full" }
                  }
                ] end
