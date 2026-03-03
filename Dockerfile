@@ -103,11 +103,13 @@ ENV OPENCLAW_BETA=${OPENCLAW_BETA} \
 RUN --mount=type=cache,target=/data/.bun/install/cache \
     bun install -g vercel @marp-team/marp-cli https://github.com/tobi/qmd && hash -r && \
     bun pm -g untrusted && \
-    bun install -g @openai/codex @google/gemini-cli opencode-ai @steipete/summarize @hyperbrowser/agent clawhub
+    bun install -g @openai/codex opencode-ai @steipete/summarize @hyperbrowser/agent clawhub
 
-# Install pnpm and OpenClaw
+# Install pnpm, Gemini CLI, and OpenClaw.
+# Gemini CLI must live under /usr/local, not /data/.bun, because /data is a
+# runtime volume mount and would otherwise mask the binary after container boot.
 RUN --mount=type=cache,target=/data/.npm \
-    npm install -g pnpm && \
+    npm install -g pnpm @google/gemini-cli && \
     npm install -g openclaw@${OPENCLAW_VERSION} && \
     if command -v openclaw >/dev/null 2>&1; then \
     echo "✅ openclaw binary found"; \

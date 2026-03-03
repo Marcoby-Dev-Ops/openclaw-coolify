@@ -406,10 +406,12 @@ if [ -f "$CONFIG_FILE" ]; then
          | .gateway.auth.token = $token
          | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
          | .plugins.load.paths = ["/data/.openclaw/extensions/nexus-toolbridge"]
-         | .plugins.allow = ["nexus-toolbridge"]
+         | .plugins.entries."google-gemini-cli-auth".enabled = true
+         # Preserve any explicitly enabled bundled auth/channel plugins and
+         # ensure Gemini CLI auth survives restarts alongside Nexus Tool Bridge.
+         | .plugins.allow = (((.plugins.allow // []) + ["nexus-toolbridge", "google-gemini-cli-auth"]) | unique)
          | .plugins.entries.whatsapp.enabled = false
          | .plugins.entries.telegram.enabled = false
-         | del(.plugins.entries."google-antigravity-auth")
          # Memory Search (enabled only; provider/model are managed by openclaw internally)
          | .agents.defaults.memorySearch.enabled = true
          | .agents.defaults.sandbox.workspaceAccess = $sandbox_workspace_access
