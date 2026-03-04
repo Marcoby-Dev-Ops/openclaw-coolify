@@ -52,6 +52,7 @@ services:
       OPENCLAW_BETA: '${OPENCLAW_BETA:-false}'
     volumes:
       - 'openclaw-data:/data'
+      - 'nexus-workspace:/data/workspace'
       - 'openclaw-workspace:/data/openclaw-workspace'
     ports:
       - '18790:18790'
@@ -121,6 +122,7 @@ networks:
 
 volumes:
   openclaw-data:
+  nexus-workspace:
   openclaw-workspace:
   searxng-data:
   registry-data:
