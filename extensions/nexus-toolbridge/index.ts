@@ -453,6 +453,25 @@ function normalizeCatalogTool(tool: NonNullable<CatalogResponse["tools"]>[number
   };
 }
 
+function dedupeToolDefinitions(
+  tools: ToolDefinition[],
+): { tools: ToolDefinition[]; duplicates: string[] } {
+  const seen = new Set<string>();
+  const duplicates: string[] = [];
+  const deduped: ToolDefinition[] = [];
+
+  for (const tool of tools) {
+    if (seen.has(tool.name)) {
+      duplicates.push(tool.name);
+      continue;
+    }
+    seen.add(tool.name);
+    deduped.push(tool);
+  }
+
+  return { tools: deduped, duplicates };
+}
+
 async function fetchCatalogFromNexus(api: OpenClawPluginApi): Promise<{
   tools: ToolDefinition[];
   version: string | null;
@@ -482,9 +501,17 @@ async function fetchCatalogFromNexus(api: OpenClawPluginApi): Promise<{
   }
 
   const payload = (await response.json()) as CatalogResponse;
-  const tools = (payload.tools || [])
+  const normalizedTools = (payload.tools || [])
     .map((tool) => normalizeCatalogTool(tool))
     .filter((tool): tool is ToolDefinition => Boolean(tool));
+
+  const { tools, duplicates } = dedupeToolDefinitions(normalizedTools);
+
+  if (duplicates.length > 0) {
+    api.logger.warn(
+      `[nexus-toolbridge] Deduped ${duplicates.length} duplicate tool definitions from Nexus catalog: ${duplicates.join(", ")}`,
+    );
+  }
 
   if (tools.length === 0) {
     api.logger.warn("[nexus-toolbridge] Nexus catalog returned zero tools; keeping current cache");

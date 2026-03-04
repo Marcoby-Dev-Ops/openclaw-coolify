@@ -362,6 +362,7 @@ if [ -f "$CONFIG_FILE" ]; then
        --arg port "${OPENCLAW_GATEWAY_PORT:-18790}" \
        --arg bind "${OPENCLAW_GATEWAY_BIND:-0.0.0.0}" \
        --arg or_key "${OPENROUTER_API_KEY:-$OPENCLAW_DEFAULT_OPENROUTER_KEY}" \
+       --arg enable_gemini_cli_auth "${OPENCLAW_ENABLE_GOOGLE_GEMINI_CLI_AUTH:-0}" \
        --arg nexus_workspace "$NEXUS_WORKSPACE_DIR" \
        --arg nexus_plugin_available "$NEXUS_TOOLBRIDGE_AVAILABLE" \
        --arg sandbox_workspace_access "${OPENCLAW_AGENTS_DEFAULTS_SANDBOX_WORKSPACEACCESS:-none}" \
@@ -381,6 +382,15 @@ if [ -f "$CONFIG_FILE" ]; then
          (if (.agents.defaults.model == null or $force_defaults == "1") then
             .agents.defaults.model = { "primary": $model, "fallbacks": (if ($fallbacks | fromjson?) then ($fallbacks | fromjson) else [] end) }
           else . end)
+         | (if $enable_gemini_cli_auth != "1" and (.agents.defaults.model.primary | tostring | startswith("google-gemini-cli")) then
+             .agents.defaults.model.primary = (
+               if ($model | tostring | startswith("google-gemini-cli")) then
+                 "openrouter/google/gemini-2.5-flash"
+               else
+                 $model
+               end
+             )
+           else . end)
          # Strip google-antigravity models unconditionally — they require OAuth that Nexus controls.
          # If primary is a google-antigravity model, replace with the configured default.
          | (if (.agents.defaults.model.primary | tostring | startswith("google-antigravity")) then
@@ -388,7 +398,12 @@ if [ -f "$CONFIG_FILE" ]; then
            else . end)
          | .agents.defaults.model.fallbacks = (
              (.agents.defaults.model.fallbacks // []) |
-             map(select((. | tostring | startswith("google-antigravity")) | not))
+             map(select((. | tostring | startswith("google-antigravity")) | not)) |
+             (if $enable_gemini_cli_auth != "1" then
+                map(select((. | tostring | startswith("google-gemini-cli")) | not))
+              else
+                .
+              end)
            )
          | (if (.env.OPENROUTER_API_KEY == null or $force_defaults == "1") then .env.OPENROUTER_API_KEY = $or_key else . end)
          | .gateway.auth.mode = "token"
@@ -406,10 +421,17 @@ if [ -f "$CONFIG_FILE" ]; then
          | .gateway.auth.token = $token
          | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
          | .plugins.load.paths = ["/data/.openclaw/extensions/nexus-toolbridge"]
-         | .plugins.entries."google-gemini-cli-auth".enabled = true
-         # Preserve any explicitly enabled bundled auth/channel plugins and
-         # ensure Gemini CLI auth survives restarts alongside Nexus Tool Bridge.
-         | .plugins.allow = (((.plugins.allow // []) + ["nexus-toolbridge", "google-gemini-cli-auth"]) | unique)
+         | .plugins.entries."google-gemini-cli-auth".enabled = ($enable_gemini_cli_auth == "1")
+         # Keep Gemini CLI auth opt-in. Nexus-managed Google auth should route
+         # through google-antigravity instead of forcing Code Assist credentials.
+         | .plugins.allow = (
+             (((.plugins.allow // []) + ["nexus-toolbridge"]) | unique)
+             | (if $enable_gemini_cli_auth == "1" then
+                  (. + ["google-gemini-cli-auth"] | unique)
+                else
+                  map(select(. != "google-gemini-cli-auth"))
+                end)
+           )
          | .plugins.entries.whatsapp.enabled = false
          | .plugins.entries.telegram.enabled = false
          # Memory Search (enabled only; provider/model are managed by openclaw internally)
