@@ -93,7 +93,7 @@ FROM runtimes AS dependencies
 
 # OpenClaw install
 ARG OPENCLAW_BETA=false
-ARG OPENCLAW_VERSION=2026.2.24
+ARG OPENCLAW_VERSION=2026.3.2
 ENV OPENCLAW_BETA=${OPENCLAW_BETA} \
     OPENCLAW_NO_ONBOARD=1 \
     NPM_CONFIG_UNSAFE_PERM=true \
@@ -118,11 +118,6 @@ RUN --mount=type=cache,target=/data/.npm \
     exit 1; \
     fi
 
-# Patch: extend claude-opus-4-6 forward-compat to google-antigravity provider
-# This adds google-antigravity support until upstream npm publishes the fix
-RUN find /usr/local/lib/node_modules/openclaw/dist -name '*.js' -exec \
-    sed -i 's/(normalizedProvider !== "anthropic") return;/(normalizedProvider !== "anthropic" \&\& normalizedProvider !== "google-antigravity") return;/g' {} + && \
-    echo "✅ Applied google-antigravity claude-opus-4-6 patch"
 
 # AI Tool Suite & ClawHub
 RUN curl -fsSL https://claude.ai/install.sh | bash && \
