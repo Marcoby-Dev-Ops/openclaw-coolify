@@ -436,6 +436,9 @@ if [ -f "$CONFIG_FILE" ]; then
          | .plugins.entries.telegram.enabled = false
          # Memory Search (enabled only; provider/model are managed by openclaw internally)
          | .agents.defaults.memorySearch.enabled = true
+         # Clean up stale configs from previous v0.8.x experimental attempts
+         | del(.agents.defaults.contextPruning)
+         | del(.agents.defaults.streaming)
          # Image model routing: used when the primary model lacks image/vision input.
          # Gemini 3 Flash is fast + multimodal; GPT-4o is a solid fallback.
          | .agents.defaults.imageModel = {
