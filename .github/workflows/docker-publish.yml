@@ -8,12 +8,12 @@ on:
       openclaw_version:
         description: 'OpenClaw Version to install'
         required: true
-        default: '2026.2.24'
+        default: '2026.3.2'
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  OPENCLAW_VERSION: ${{ github.event.inputs.openclaw_version || '2026.2.24' }}
+  OPENCLAW_VERSION: ${{ github.event.inputs.openclaw_version || '2026.3.2' }}
 
 jobs:
   build:

@@ -436,20 +436,6 @@ if [ -f "$CONFIG_FILE" ]; then
          | .plugins.entries.telegram.enabled = false
          # Memory Search (enabled only; provider/model are managed by openclaw internally)
          | .agents.defaults.memorySearch.enabled = true
-         # Context pruning: trim stale tool results before LLM calls to reduce
-         # cache-write costs (especially Anthropic) and keep context lean.
-         | .agents.defaults.contextPruning = {
-             "mode": "adaptive",
-             "keepLastAssistants": 3,
-             "softTrimRatio": 0.3,
-             "hardClearRatio": 0.5,
-             "minPrunableToolChars": 50000,
-             "softTrim": { "maxChars": 4000, "headChars": 1500, "tailChars": 1500 },
-             "hardClear": { "enabled": true, "placeholder": "[Old tool result cleared]" }
-           }
-         # Streaming heartbeat: SSE keepalive every 15s to prevent proxy/CDN
-         # gateway timeouts (e.g. Cloudflare 524) on slow LLM responses.
-         | .agents.defaults.streaming = { "heartbeatIntervalMs": 15000 }
          # Image model routing: used when the primary model lacks image/vision input.
          # Gemini 3 Flash is fast + multimodal; GPT-4o is a solid fallback.
          | .agents.defaults.imageModel = {
