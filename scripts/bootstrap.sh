@@ -356,7 +356,7 @@ if [ -f "$CONFIG_FILE" ]; then
     
     # 2. Apply Overrides
     # Default to OpenRouter Google Gemini if no primary model specified
-    jq --arg model "${OPENCLAW_AGENTS_DEFAULTS_MODEL_PRIMARY:-google/gemini-3-flash}" \
+    jq --arg model "${OPENCLAW_AGENTS_DEFAULTS_MODEL_PRIMARY:-google/gemini-3-flash-preview}" \
        --arg fallbacks "$FINAL_FALLBACKS" \
        --arg token "${OPENCLAW_GATEWAY_TOKEN:-sk-openclaw-local}" \
        --arg port "${OPENCLAW_GATEWAY_PORT:-18790}" \
@@ -385,7 +385,7 @@ if [ -f "$CONFIG_FILE" ]; then
          | (if $enable_gemini_cli_auth != "1" and (.agents.defaults.model.primary | tostring | startswith("google-gemini-cli")) then
              .agents.defaults.model.primary = (
                if ($model | tostring | startswith("google-gemini-cli")) then
-                 "openrouter/google/gemini-3-flash"
+                 "openrouter/google/gemini-3-flash-preview"
                else
                  $model
                end
@@ -442,10 +442,10 @@ if [ -f "$CONFIG_FILE" ]; then
          # Image model routing: used when the primary model lacks image/vision input.
          # Gemini 3 Flash is fast + multimodal; GPT-4o is a solid fallback.
          | .agents.defaults.imageModel = {
-             "primary": "google/gemini-3-flash",
+             "primary": "google/gemini-3-flash-preview",
              "fallbacks": [
                "openai/gpt-4o",
-               "openrouter/google/gemini-3-flash"
+               "openrouter/google/gemini-3-flash-preview"
              ]
            }
          # Auth profile routing: Nexus injects per-user keys as auth profiles
