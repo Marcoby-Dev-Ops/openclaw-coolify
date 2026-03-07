@@ -463,7 +463,7 @@ if [ -f "$CONFIG_FILE" ]; then
          # (profile id = userId). The x-nexus-user trusted proxy header (set above)
          # tells OpenClaw which user is making the request, so it selects the
          # matching auth profile automatically. OAuth profiles are preferred
-         # over API keys by default (OpenClaw's built-in rotation order).
+         # over API keys by default (OpenClaw built-in rotation order).
          | .agents.defaults.sandbox.workspaceAccess = $sandbox_workspace_access
          # Skills allowlist - allow all bundled skills
          | .skills.allowBundled = ["*"]
