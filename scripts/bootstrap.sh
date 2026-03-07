@@ -342,21 +342,21 @@ if [ -f "$CONFIG_FILE" ]; then
 
     if [ -z "$FINAL_FALLBACKS" ] || [ "$FINAL_FALLBACKS" == "[]" ]; then
         FALLBACKS_ARRAY=()
-        [ -n "$OPENROUTER_API_KEY" ] && FALLBACKS_ARRAY+=("\"openrouter/anthropic/claude-3.5-sonnet\"" "\"openrouter/openai/gpt-4o-mini\"")
-        [ -n "$OPENAI_API_KEY" ] && FALLBACKS_ARRAY+=("\"openai/gpt-4o-mini\"")
-        [ -n "$ANTHROPIC_API_KEY" ] && FALLBACKS_ARRAY+=("\"anthropic/claude-3-5-sonnet-20241022\"")
+        [ -n "$OPENROUTER_API_KEY" ] && FALLBACKS_ARRAY+=("\"openrouter/anthropic/claude-sonnet-4-6\"" "\"openrouter/openai/gpt-4o\"")
+        [ -n "$OPENAI_API_KEY" ] && FALLBACKS_ARRAY+=("\"openai/gpt-5.2\"")
+        [ -n "$ANTHROPIC_API_KEY" ] && FALLBACKS_ARRAY+=("\"anthropic/claude-sonnet-4-6\"")
         
         IFS=, ; FALLBACKS_STRING="${FALLBACKS_ARRAY[*]}" ; unset IFS
         FINAL_FALLBACKS="[$FALLBACKS_STRING]"
     fi
     
     if [ "$FINAL_FALLBACKS" == "[]" ]; then
-       FINAL_FALLBACKS='["openrouter/anthropic/claude-3.5-sonnet", "openrouter/openai/gpt-4o-mini"]'
+       FINAL_FALLBACKS='["openrouter/anthropic/claude-sonnet-4-6", "openrouter/openai/gpt-4o"]'
     fi
     
     # 2. Apply Overrides
     # Default to OpenRouter Google Gemini if no primary model specified
-    jq --arg model "${OPENCLAW_AGENTS_DEFAULTS_MODEL_PRIMARY:-google/gemini-2.0-flash}" \
+    jq --arg model "${OPENCLAW_AGENTS_DEFAULTS_MODEL_PRIMARY:-google/gemini-3-flash}" \
        --arg fallbacks "$FINAL_FALLBACKS" \
        --arg token "${OPENCLAW_GATEWAY_TOKEN:-sk-openclaw-local}" \
        --arg port "${OPENCLAW_GATEWAY_PORT:-18790}" \
@@ -385,7 +385,7 @@ if [ -f "$CONFIG_FILE" ]; then
          | (if $enable_gemini_cli_auth != "1" and (.agents.defaults.model.primary | tostring | startswith("google-gemini-cli")) then
              .agents.defaults.model.primary = (
                if ($model | tostring | startswith("google-gemini-cli")) then
-                 "openrouter/google/gemini-2.5-flash"
+                 "openrouter/google/gemini-3-flash"
                else
                  $model
                end
@@ -436,6 +436,34 @@ if [ -f "$CONFIG_FILE" ]; then
          | .plugins.entries.telegram.enabled = false
          # Memory Search (enabled only; provider/model are managed by openclaw internally)
          | .agents.defaults.memorySearch.enabled = true
+         # Context pruning: trim stale tool results before LLM calls to reduce
+         # cache-write costs (especially Anthropic) and keep context lean.
+         | .agents.defaults.contextPruning = {
+             "mode": "adaptive",
+             "keepLastAssistants": 3,
+             "softTrimRatio": 0.3,
+             "hardClearRatio": 0.5,
+             "minPrunableToolChars": 50000,
+             "softTrim": { "maxChars": 4000, "headChars": 1500, "tailChars": 1500 },
+             "hardClear": { "enabled": true, "placeholder": "[Old tool result cleared]" }
+           }
+         # Streaming heartbeat: SSE keepalive every 15s to prevent proxy/CDN
+         # gateway timeouts (e.g. Cloudflare 524) on slow LLM responses.
+         | .agents.defaults.streaming = { "heartbeatIntervalMs": 15000 }
+         # Image model routing: used when the primary model lacks image/vision input.
+         # Gemini 3 Flash is fast + multimodal; GPT-4o is a solid fallback.
+         | .agents.defaults.imageModel = {
+             "primary": "google/gemini-3-flash",
+             "fallbacks": [
+               "openai/gpt-4o",
+               "openrouter/google/gemini-3-flash"
+             ]
+           }
+         # Auth profile routing: Nexus injects per-user keys as auth profiles
+         # (profile id = userId). The x-nexus-user trusted proxy header (set above)
+         # tells OpenClaw which user is making the request, so it selects the
+         # matching auth profile automatically. OAuth profiles are preferred
+         # over API keys by default (OpenClaw's built-in rotation order).
          | .agents.defaults.sandbox.workspaceAccess = $sandbox_workspace_access
          # Skills allowlist - allow all bundled skills
          | .skills.allowBundled = ["*"]
