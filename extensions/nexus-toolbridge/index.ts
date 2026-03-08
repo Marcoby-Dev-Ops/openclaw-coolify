@@ -556,7 +556,8 @@ async function refreshCatalog(api: OpenClawPluginApi, reason: string): Promise<T
         toolCatalogState.fetchedAt = Date.now();
       }
     } catch (error) {
-      api.logger.error(`[nexus-toolbridge] Failed to refresh tool catalog (${reason})`, error);
+      const errMsg = error instanceof Error ? error.message : String(error);
+      api.logger.error(`[nexus-toolbridge] Failed to refresh tool catalog (${reason}): ${errMsg}`);
       toolCatalogState.fetchedAt = Date.now();
     } finally {
       toolCatalogState.refreshPromise = null;
