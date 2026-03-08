@@ -464,6 +464,7 @@ if [ -f "$CONFIG_FILE" ]; then
          # 3. Authority Separation & Tool Tiering (v0.8)
          # Ensure sandboxed sessions (workers) can NEVER call Nexus tools.
          | .tools.profile = "full"
+         | .tools.deny = ["group:ui", "group:automation", "group:messaging", "group:nodes"]
          | del(.tools.alsoAllow)
          | .tools.sandbox.tools.allow = (
              [
