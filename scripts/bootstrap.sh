@@ -489,6 +489,7 @@ if [ -f "$CONFIG_FILE" ]; then
                    # Tier 1: Executive Brain - Orchestration only.
                    .default = false
                    | .tools = { "profile": "minimal", "allow": ["group:sessions", "group:messaging"] }
+                   | .model = { "primary": "openai/gpt-4o", "fallbacks": ["openrouter/google/gemini-1.5-pro"] }
                  elif .id == "nexus" then
                    # Tier 2: Business Agent - full tool profile so plugin-registered nexus_* tools are included.
                    # Using profile:"full" avoids the timing issue where the nexus-toolbridge plugin
@@ -509,7 +510,8 @@ if [ -f "$CONFIG_FILE" ]; then
                          }
                        end
                      ),
-                     "tools": { "profile": "full" }
+                     "tools": { "profile": "full" },
+                     "model": { "primary": "openai/gpt-4o-mini", "fallbacks": ["openrouter/google/gemini-3-flash-preview", "openai/gpt-4o"] }
                    }
                  else .
                  end
@@ -532,7 +534,8 @@ if [ -f "$CONFIG_FILE" ]; then
                        }
                      end
                    ),
-                   "tools": { "profile": "full" }
+                   "tools": { "profile": "full" },
+                   "model": { "primary": "openai/gpt-4o-mini", "fallbacks": ["openrouter/google/gemini-3-flash-preview", "openai/gpt-4o"] }
                  }
                ] end
            )
