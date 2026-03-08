@@ -343,7 +343,7 @@ if [ -f "$CONFIG_FILE" ]; then
     if [ -z "$FINAL_FALLBACKS" ] || [ "$FINAL_FALLBACKS" == "[]" ]; then
         FALLBACKS_ARRAY=()
         [ -n "$OPENROUTER_API_KEY" ] && FALLBACKS_ARRAY+=("\"openrouter/anthropic/claude-sonnet-4-6\"" "\"openrouter/openai/gpt-4o\"")
-        [ -n "$OPENAI_API_KEY" ] && FALLBACKS_ARRAY+=("\"openai/gpt-5.2\"")
+        [ -n "$OPENAI_API_KEY" ] && FALLBACKS_ARRAY+=("\"openai/gpt-4o\"")
         [ -n "$ANTHROPIC_API_KEY" ] && FALLBACKS_ARRAY+=("\"anthropic/claude-sonnet-4-6\"")
         
         IFS=, ; FALLBACKS_STRING="${FALLBACKS_ARRAY[*]}" ; unset IFS
@@ -489,7 +489,7 @@ if [ -f "$CONFIG_FILE" ]; then
                    # Tier 1: Executive Brain - Orchestration only.
                    .default = false
                    | .tools = { "profile": "minimal", "allow": ["group:sessions", "group:messaging"] }
-                   | .model = { "primary": "openai/gpt-4o", "fallbacks": ["openrouter/google/gemini-1.5-pro"] }
+                   | .model = { "primary": "openai/gpt-4o", "fallbacks": ["openrouter/google/gemini-3-flash-preview", "anthropic/claude-sonnet-4-6"] }
                  elif .id == "nexus" then
                    # Tier 2: Business Agent - full tool profile so plugin-registered nexus_* tools are included.
                    # Using profile:"full" avoids the timing issue where the nexus-toolbridge plugin
@@ -511,7 +511,7 @@ if [ -f "$CONFIG_FILE" ]; then
                        end
                      ),
                      "tools": { "profile": "full" },
-                     "model": { "primary": "openai/gpt-4o-mini", "fallbacks": ["openrouter/google/gemini-3-flash-preview", "openai/gpt-4o"] }
+                     "model": { "primary": "openai/gpt-4o", "fallbacks": ["anthropic/claude-sonnet-4-6", "openrouter/google/gemini-3-flash-preview"] }
                    }
                  else .
                  end
