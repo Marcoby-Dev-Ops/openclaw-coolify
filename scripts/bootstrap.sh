@@ -391,14 +391,12 @@ if [ -f "$CONFIG_FILE" ]; then
                end
              )
            else . end)
-         # Strip google-antigravity models unconditionally — they require OAuth that Nexus controls.
-         # If primary is a google-antigravity model, replace with the configured default.
-         | (if (.agents.defaults.model.primary | tostring | startswith("google-antigravity")) then
-             .agents.defaults.model.primary = $model
-           else . end)
+         # google-antigravity models require OAuth tokens that Nexus injects via
+         # `openclaw models auth paste-token`. OpenClaw gracefully skips models
+         # without valid auth, so we no longer strip them from defaults here.
+         # google-gemini-cli models are opt-in via the plugin flag.
          | .agents.defaults.model.fallbacks = (
              (.agents.defaults.model.fallbacks // []) |
-             map(select((. | tostring | startswith("google-antigravity")) | not)) |
              (if $enable_gemini_cli_auth != "1" then
                 map(select((. | tostring | startswith("google-gemini-cli")) | not))
               else
@@ -448,11 +446,12 @@ if [ -f "$CONFIG_FILE" ]; then
                "openrouter/google/gemini-3-flash-preview"
              ]
            }
-         # Auth profile routing: Nexus injects per-user keys as auth profiles
-         # (profile id = userId). The x-nexus-user trusted proxy header (set above)
-         # tells OpenClaw which user is making the request, so it selects the
-         # matching auth profile automatically. OAuth profiles are preferred
-         # over API keys by default (OpenClaw built-in rotation order).
+         # Auth profile routing: Nexus injects per-user keys via the official
+         # `openclaw models auth paste-token` CLI (profile id = provider:userId).
+         # The x-nexus-user trusted proxy header (set above) tells OpenClaw
+         # which user is making the request. Auth order is managed via
+         # `openclaw models auth order set`. Nexus owns the OAuth refresh
+         # cycle and re-injects fresh access tokens before they expire.
          | .agents.defaults.sandbox.workspaceAccess = $sandbox_workspace_access
          # Skills allowlist - allow all bundled skills
          | .skills.allowBundled = ["*"]
