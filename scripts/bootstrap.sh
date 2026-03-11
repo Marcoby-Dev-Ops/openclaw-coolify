@@ -432,8 +432,11 @@ if [ -f "$CONFIG_FILE" ]; then
            )
          | .plugins.entries.whatsapp.enabled = false
          | .plugins.entries.telegram.enabled = false
-         # Memory Search (enabled only; provider/model are managed by openclaw internally)
-         | .agents.defaults.memorySearch.enabled = true
+         # Memory Search: disabled — Nexus manages user memory (soul profiles,
+         # relationship state, RAG blocks) server-side and injects it via the
+         # system prompt. OpenClaw's built-in semantic recall is redundant and
+         # requires a dedicated embedding provider we don't configure.
+         | .agents.defaults.memorySearch.enabled = false
          # Clean up stale configs from previous v0.8.x experimental attempts
          | del(.agents.defaults.contextPruning)
          | del(.agents.defaults.streaming)
