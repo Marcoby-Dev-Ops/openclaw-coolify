@@ -488,7 +488,7 @@ if [ -f "$CONFIG_FILE" ]; then
                    # Tier 1: Executive Brain - Orchestration only.
                    .default = false
                    | .tools = { "profile": "minimal", "allow": ["group:sessions", "group:messaging"] }
-                   | .model = { "primary": "openai/gpt-4o", "fallbacks": ["openrouter/google/gemini-3-flash-preview", "anthropic/claude-sonnet-4-6"] }
+                   | .model = { "primary": "openai/gpt-5.4", "fallbacks": ["anthropic/claude-sonnet-4-6", "openrouter/google/gemini-3-flash-preview"] }
                  elif .id == "nexus" then
                    # Tier 2: Business Agent - full tool profile so plugin-registered nexus_* tools are included.
                    # Using profile:"full" avoids the timing issue where the nexus-toolbridge plugin
@@ -510,7 +510,7 @@ if [ -f "$CONFIG_FILE" ]; then
                        end
                      ),
                      "tools": { "profile": "full" },
-                     "model": { "primary": "openai/gpt-4o", "fallbacks": ["anthropic/claude-sonnet-4-6", "openrouter/google/gemini-3-flash-preview"] }
+                     "model": { "primary": "openai/gpt-5.4", "fallbacks": ["anthropic/claude-sonnet-4-6", "openrouter/google/gemini-3-flash-preview"] }
                    }
                  else .
                  end
@@ -534,7 +534,7 @@ if [ -f "$CONFIG_FILE" ]; then
                      end
                    ),
                    "tools": { "profile": "full" },
-                   "model": { "primary": "openai/gpt-4o-mini", "fallbacks": ["openrouter/google/gemini-3-flash-preview", "openai/gpt-4o"] }
+                   "model": { "primary": "openai/gpt-5-mini", "fallbacks": ["anthropic/claude-sonnet-4-6", "openrouter/google/gemini-3-flash-preview"] }
                  }
                ] end
            )
