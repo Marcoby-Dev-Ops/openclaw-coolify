@@ -254,6 +254,10 @@ if [ ! -f "$CONFIG_FILE" ]; then
   "port": $OPENCLAW_GATEWAY_PORT,
   "mode": "local",
     "bind": "0.0.0.0",
+    "reload": {
+      "mode": "${OPENCLAW_GATEWAY_RELOAD_MODE:-hot}",
+      "debounceMs": 300
+    },
     "controlUi": { "enabled": false },
     "trustedProxies": [
       "*"
@@ -361,6 +365,7 @@ if [ -f "$CONFIG_FILE" ]; then
        --arg token "${OPENCLAW_GATEWAY_TOKEN:-sk-openclaw-local}" \
        --arg port "${OPENCLAW_GATEWAY_PORT:-18790}" \
        --arg bind "${OPENCLAW_GATEWAY_BIND:-0.0.0.0}" \
+       --arg reload_mode "${OPENCLAW_GATEWAY_RELOAD_MODE:-hot}" \
        --arg or_key "${OPENROUTER_API_KEY:-$OPENCLAW_DEFAULT_OPENROUTER_KEY}" \
        --arg enable_gemini_cli_auth "${OPENCLAW_ENABLE_GOOGLE_GEMINI_CLI_AUTH:-0}" \
        --arg nexus_workspace "$NEXUS_WORKSPACE_DIR" \
@@ -411,6 +416,8 @@ if [ -f "$CONFIG_FILE" ]; then
          | .gateway.trustedProxies = ["127.0.0.1", "::1", "172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"]
          | .gateway.port = ($port|tonumber)
          | .gateway.bind = $bind
+         | .gateway.reload.mode = $reload_mode
+         | .gateway.reload.debounceMs = 300
          | .gateway.controlUi.enabled = false
          | .gateway.controlUi.allowedOrigins = ["*"]
          | .gateway.controlUi.allowInsecureAuth = true

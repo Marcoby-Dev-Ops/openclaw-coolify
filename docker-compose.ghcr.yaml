@@ -15,7 +15,7 @@ services:
     # Defaults to `latest`, but always pulls so mutable tags do not reuse stale local images.
     image: 'ghcr.io/marcoby-dev-ops/openclaw-coolify:${OPENCLAW_TAG:-latest}'
     pull_policy: always
-    restart: 'on-failure:10'
+    restart: unless-stopped
     networks:
       - coolify
     ulimits:
@@ -38,6 +38,7 @@ services:
       OPENCLAW_NEXUS_AGENT_SANDBOX_MODE: '${OPENCLAW_NEXUS_AGENT_SANDBOX_MODE:-off}'
       OPENCLAW_AGENTS_DEFAULTS_SANDBOX_DOCKER_NETWORK: '${OPENCLAW_AGENTS_DEFAULTS_SANDBOX_DOCKER_NETWORK:-bridge}'
       OPENCLAW_GATEWAY_BIND: '${OPENCLAW_GATEWAY_BIND:-lan}'
+      OPENCLAW_GATEWAY_RELOAD_MODE: '${OPENCLAW_GATEWAY_RELOAD_MODE:-hot}'
       OPENCLAW_GATEWAY_PORT: '${OPENCLAW_GATEWAY_PORT:-18790}'
       OPENCLAW_STATE_DIR: /data/.openclaw
       OPENCLAW_WORKSPACE: /data/openclaw-workspace
