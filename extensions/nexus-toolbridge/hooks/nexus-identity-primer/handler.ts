@@ -42,6 +42,8 @@ function resolveNexusOpenClawApiKey(): string {
   );
 }
 
+const LEGACY_SESSION_KEY_MARKERS = ["openai-user:", "nexus-openai-user:"] as const;
+
 function extractNexusUserFromSessionKey(
   sessionKey: string | undefined,
 ): { userId: string; conversationId: string | null } | null {
@@ -49,18 +51,21 @@ function extractNexusUserFromSessionKey(
   if (!raw) return null;
 
   const lowered = raw.toLowerCase();
-  const marker = "openai-user:";
-  const idx = lowered.indexOf(marker);
-  if (idx < 0) return null;
+  for (const marker of LEGACY_SESSION_KEY_MARKERS) {
+    const idx = lowered.indexOf(marker);
+    if (idx < 0) continue;
 
-  const after = raw.slice(idx + marker.length);
-  const parts = after.split(":").filter(Boolean);
-  if (parts.length === 0) return null;
+    const after = raw.slice(idx + marker.length);
+    const parts = after.split(":").filter(Boolean);
+    if (parts.length === 0) continue;
 
-  return {
-    userId: parts[0],
-    conversationId: parts.length > 1 ? parts.slice(1).join(":") : null,
-  };
+    return {
+      userId: parts[0],
+      conversationId: parts.length > 1 ? parts.slice(1).join(":") : null,
+    };
+  }
+
+  return null;
 }
 
 const handler = async (event: any) => {
