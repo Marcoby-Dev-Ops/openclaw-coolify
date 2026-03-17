@@ -44,6 +44,11 @@ interface CredentialCacheEntry {
 const CREDENTIALS_TTL_MS = 300_000; // 5 minutes
 const credentialCache = new Map<string, CredentialCacheEntry>();
 
+// Most-recent session key — updated every time the registerTool factory is
+// called so that tool execute() closures always resolve the latest identity
+// even if they were instantiated before the session was fully established.
+let latestSessionKey: string | undefined;
+
 // ---------------------------------------------------------------------------
 // Local tool execution — tools that can run directly inside the OpenClaw
 // container without a network round-trip back to Nexus.
@@ -676,6 +681,12 @@ const nexusToolbridgePlugin = {
       const sessionKey = ctx.sessionKey;
       const toolDefinitions = getAvailableToolDefinitions(api);
 
+      // Keep module-level key up-to-date so that execute() closures from
+      // earlier factory evaluations can still resolve the current identity.
+      if (sessionKey) {
+        latestSessionKey = sessionKey;
+      }
+
       // Fire-and-forget JIT credential sync for this user session
       const nexusUser = extractNexusUserFromSessionKey(sessionKey);
       if (nexusUser?.userId) {
@@ -696,8 +707,11 @@ const nexusToolbridgePlugin = {
               ? (params as Record<string, unknown>)
               : {};
 
-          // Resolve userId for this execution
-          const user = extractNexusUserFromSessionKey(sessionKey);
+          // Resolve userId — prefer the closure sessionKey, fall back to the
+          // module-level latestSessionKey to handle the race where tools are
+          // instantiated before the session key is fully propagated.
+          const effectiveSessionKey = sessionKey || latestSessionKey;
+          const user = extractNexusUserFromSessionKey(effectiveSessionKey);
           const userId = user?.userId || "unknown";
 
           // Local execution for file tools (avoids network round-trip)
@@ -716,7 +730,7 @@ const nexusToolbridgePlugin = {
           // Remote execution via Nexus API
           const result = await callNexusTool({
             api,
-            sessionKey,
+            sessionKey: effectiveSessionKey,
             toolName: tool.name,
             args,
             toolCallId,
