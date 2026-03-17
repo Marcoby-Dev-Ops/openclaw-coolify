@@ -1,6 +1,8 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { emptyPluginConfigSchema, jsonResult } from "openclaw/plugin-sdk";
 import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 
 type ToolSchema = Record<string, unknown>;
 
@@ -30,6 +32,161 @@ interface ToolCatalogState {
   fetchedAt: number;
   refreshPromise: Promise<ToolDefinition[]> | null;
 }
+
+// ---------------------------------------------------------------------------
+// JIT Credential Cache
+// ---------------------------------------------------------------------------
+interface CredentialCacheEntry {
+  keys: Record<string, string>;
+  expiry: number;
+}
+
+const CREDENTIALS_TTL_MS = 300_000; // 5 minutes
+const credentialCache = new Map<string, CredentialCacheEntry>();
+
+// ---------------------------------------------------------------------------
+// Local tool execution — tools that can run directly inside the OpenClaw
+// container without a network round-trip back to Nexus.
+// ---------------------------------------------------------------------------
+const LOCAL_TOOL_NAMES = new Set([
+  "nexus_read_file",
+  "nexus_write_file",
+  "nexus_list_files",
+]);
+
+function resolveWorkspaceBase(userId: string): string {
+  // Per-user workspace directory.  The shared volume is mounted at
+  // /data/workspace with per-user sub-dirs (managed by Nexus's
+  // workspaceFileService).  Fall back to the legacy flat path only if the
+  // per-user directory does not exist yet.
+  const perUser = path.join("/data/workspace", userId);
+  if (fs.existsSync(perUser)) return perUser;
+
+  // Ensure the per-user directory exists on first use
+  try {
+    fs.mkdirSync(perUser, { recursive: true });
+    return perUser;
+  } catch {
+    // Last resort — flat path (matches the optimized draft)
+    return "/data/workspace";
+  }
+}
+
+function sanitizeFilename(filename: string): string {
+  // Prevent path traversal
+  const normalized = path.normalize(filename).replace(/^(\.\.(\/|\\|$))+/, "");
+  if (normalized.startsWith("/") || normalized.includes("..")) {
+    throw new Error("Invalid filename: path traversal is not allowed");
+  }
+  return normalized;
+}
+
+async function executeLocalTool(
+  toolName: string,
+  args: Record<string, unknown>,
+  userId: string,
+  api: OpenClawPluginApi,
+): Promise<unknown> {
+  const workspaceBase = resolveWorkspaceBase(userId);
+
+  if (toolName === "nexus_read_file") {
+    const filename = sanitizeFilename(String(args.filename || ""));
+    const filePath = path.join(workspaceBase, filename);
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`File not found: ${filename}`);
+    }
+    const content = fs.readFileSync(filePath);
+    const encoding = String(args.encoding || "utf-8");
+    return {
+      content: encoding === "base64" ? content.toString("base64") : content.toString("utf-8"),
+      filename,
+      encoding,
+      size: content.length,
+    };
+  }
+
+  if (toolName === "nexus_write_file") {
+    const filename = sanitizeFilename(String(args.filename || ""));
+    const filePath = path.join(workspaceBase, filename);
+    const parentDir = path.dirname(filePath);
+    if (!fs.existsSync(parentDir)) fs.mkdirSync(parentDir, { recursive: true });
+    const encoding = String(args.encoding || "utf-8");
+    const buffer =
+      encoding === "base64"
+        ? Buffer.from(String(args.content || ""), "base64")
+        : Buffer.from(String(args.content || ""), "utf-8");
+    fs.writeFileSync(filePath, buffer);
+    api.logger.info(`[nexus-toolbridge] Local write: ${filename} (${buffer.length} bytes)`);
+    return { success: true, filename, size: buffer.length };
+  }
+
+  if (toolName === "nexus_list_files") {
+    const subPath = String(args.path || "");
+    const searchPath = subPath ? path.join(workspaceBase, sanitizeFilename(subPath)) : workspaceBase;
+    if (!fs.existsSync(searchPath)) return { files: [] };
+    const entries = fs.readdirSync(searchPath);
+    const files = entries.map((name) => {
+      const fullPath = path.join(searchPath, name);
+      try {
+        const stat = fs.statSync(fullPath);
+        return { name, size: stat.size, mtime: stat.mtime.toISOString(), isDirectory: stat.isDirectory() };
+      } catch {
+        return { name, size: 0, mtime: null, isDirectory: false };
+      }
+    });
+    return { files, path: subPath || "/" };
+  }
+
+  throw new Error(`Local tool ${toolName} not implemented`);
+}
+
+// ---------------------------------------------------------------------------
+// JIT Credential Sync — fetches per-user API keys from Nexus on demand
+// instead of requiring docker exec injection.
+// ---------------------------------------------------------------------------
+async function syncCredentialsIfNeeded(
+  api: OpenClawPluginApi,
+  userId: string,
+): Promise<void> {
+  const cached = credentialCache.get(userId);
+  if (cached && cached.expiry > Date.now()) return;
+
+  const nexusApiUrl = resolveNexusApiUrl();
+  const apiKey = resolveNexusOpenClawApiKey();
+
+  try {
+    const resp = await fetch(`${nexusApiUrl}/api/openclaw/credentials`, {
+      headers: {
+        "X-OpenClaw-Api-Key": apiKey,
+        "X-Nexus-User-Id": userId,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!resp.ok) {
+      api.logger.warn(`[nexus-toolbridge] Credential sync returned HTTP ${resp.status} for user ${userId}`);
+      return;
+    }
+
+    const data = (await resp.json()) as { success?: boolean; credentials?: Record<string, string> };
+    if (data.success && data.credentials) {
+      credentialCache.set(userId, {
+        keys: data.credentials,
+        expiry: Date.now() + CREDENTIALS_TTL_MS,
+      });
+      api.logger.info(
+        `[nexus-toolbridge] JIT credential sync: ${Object.keys(data.credentials).length} providers for user ${userId}`,
+      );
+    }
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    api.logger.error(`[nexus-toolbridge] Credential sync failed for ${userId}: ${errMsg}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function normalizeBaseUrl(input: string | undefined | null): string {
   const raw = String(input ?? "").trim();
@@ -116,6 +273,9 @@ function resolveCatalogTtlMs(): number {
 
 const TOOL_CATALOG_TTL_MS = resolveCatalogTtlMs();
 
+// ---------------------------------------------------------------------------
+// Fallback tool definitions — used when Nexus catalog is unreachable
+// ---------------------------------------------------------------------------
 const FALLBACK_TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "nexus_m365_capabilities",
@@ -138,22 +298,7 @@ const FALLBACK_TOOL_DEFINITIONS: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       required: ["email"],
-      properties: {
-        email: { type: "string" },
-      },
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "nexus_start_email_connection",
-    description: "Start OAuth connection flow for an email provider.",
-    inputSchema: {
-      type: "object",
-      required: ["provider"],
-      properties: {
-        provider: { type: "string", description: 'Provider slug, e.g. "microsoft" or "google-workspace".' },
-        redirectUri: { type: "string" },
-      },
+      properties: { email: { type: "string" } },
       additionalProperties: false,
     },
   },
@@ -166,139 +311,9 @@ const FALLBACK_TOOL_DEFINITIONS: ToolDefinition[] = [
       properties: {
         provider: {
           type: "string",
-          enum: [
-            "microsoft",
-            "microsoft365",
-            "google",
-            "google_workspace",
-            "google-workspace",
-            "google_analytics",
-            "google-analytics",
-            "github",
-            "hubspot",
-            "slack",
-          ],
+          enum: ["microsoft", "microsoft365", "google", "google_workspace", "google-workspace", "google_analytics", "google-analytics", "github", "hubspot", "slack"],
         },
         redirectUri: { type: "string" },
-      },
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "nexus_start_github_connection",
-    description: "Start OAuth connect flow for GitHub so Nexus can access private repositories via a stored user integration.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        redirectUri: { type: "string" },
-      },
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "nexus_github_auth_status",
-    description: "Check whether the current Nexus user has a connected GitHub OAuth integration and inspect token readiness.",
-    inputSchema: { type: "object", properties: {}, additionalProperties: false },
-  },
-  {
-    name: "nexus_get_provider_auth_status",
-    description: "Check whether the current Nexus user has a connected OAuth integration for a supported provider.",
-    inputSchema: {
-      type: "object",
-      required: ["provider"],
-      properties: {
-        provider: {
-          type: "string",
-          enum: [
-            "microsoft",
-            "microsoft365",
-            "google",
-            "google_workspace",
-            "google-workspace",
-            "google_analytics",
-            "google-analytics",
-            "github",
-            "hubspot",
-            "slack",
-          ],
-        },
-      },
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "nexus_list_github_repositories",
-    description: "List the current user's GitHub repositories after connecting GitHub.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        limit: { type: "number" },
-        visibility: { type: "string", enum: ["all", "public", "private"] },
-        type: { type: "string", enum: ["all", "owner", "member"] },
-      },
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "nexus_list_hubspot_contacts",
-    description: "List HubSpot contacts for the current user after connecting HubSpot.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        limit: { type: "number" },
-      },
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "nexus_list_slack_channels",
-    description: "List Slack channels for the current user after connecting Slack.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        limit: { type: "number" },
-        cursor: { type: "string" },
-      },
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "nexus_get_google_analytics_accounts",
-    description: "List Google Analytics accounts and properties available to the current user.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        limit: { type: "number" },
-      },
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "nexus_connect_imap",
-    description: "Connect an IMAP inbox using host/port credentials (fallback when OAuth is unavailable).",
-    inputSchema: {
-      type: "object",
-      required: ["email", "host", "port", "username", "password"],
-      properties: {
-        email: { type: "string" },
-        host: { type: "string" },
-        port: { type: "number" },
-        username: { type: "string" },
-        password: { type: "string" },
-        useSSL: { type: "boolean" },
-        providerHint: { type: "string" },
-      },
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "nexus_test_integration_connection",
-    description: "Test saved OAuth connection health for a provider.",
-    inputSchema: {
-      type: "object",
-      required: ["provider"],
-      properties: {
-        provider: { type: "string" },
       },
       additionalProperties: false,
     },
@@ -317,36 +332,24 @@ const FALLBACK_TOOL_DEFINITIONS: ToolDefinition[] = [
         query: { type: "string" },
         unreadOnly: { type: "boolean" },
         limit: { type: "number" },
-        timezone: { type: "string", description: "IANA timezone (e.g. America/Chicago). Defaults to user profile timezone or UTC." },
+        timezone: { type: "string" },
       },
       additionalProperties: false,
     },
   },
   {
     name: "nexus_send_email",
-    description: "Send an email to specific recipients with a subject, body, and optional CC, BCC, and attachments.",
+    description: "Send an email to specific recipients with a subject, body, and optional CC, BCC.",
     inputSchema: {
       type: "object",
       required: ["to", "subject", "body"],
       properties: {
-        provider: { type: "string", enum: ["auto", "microsoft", "google-workspace"], description: "The email provider to use. Defaults to 'auto'." },
-        to: { type: "string", description: "A single recipient email address or a comma-separated list." },
-        subject: { type: "string", description: "The subject line of the email." },
-        body: { type: "string", description: "The main content of the email (HTML or plain text)." },
-        cc: { type: "string", description: "Optional recipient email address or comma-separated list." },
-        bcc: { type: "string", description: "Optional recipient email address or comma-separated list." },
-        attachments: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              filename: { type: "string" },
-              path: { type: "string" },
-              contentType: { type: "string" },
-            },
-            required: ["filename", "path"],
-          },
-        },
+        provider: { type: "string", enum: ["auto", "microsoft", "google-workspace"] },
+        to: { type: "string" },
+        subject: { type: "string" },
+        body: { type: "string" },
+        cc: { type: "string" },
+        bcc: { type: "string" },
       },
       additionalProperties: false,
     },
@@ -358,23 +361,11 @@ const FALLBACK_TOOL_DEFINITIONS: ToolDefinition[] = [
       type: "object",
       properties: {
         provider: { type: "string", enum: ["auto", "microsoft", "google-workspace"] },
-        datePreset: { type: "string", enum: ["today", "last_7_days", "last_30_days", "this_week", "last_week", "this_month", "last_month", "custom"] },
+        datePreset: { type: "string" },
         startDate: { type: "string" },
         endDate: { type: "string" },
         limit: { type: "number" },
-        timezone: { type: "string", description: "IANA timezone. Defaults to user profile timezone or UTC." },
-      },
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "nexus_disconnect_integration",
-    description: "Disconnect an integration by ID or provider.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        integrationId: { type: "string" },
-        provider: { type: "string" },
+        timezone: { type: "string" },
       },
       additionalProperties: false,
     },
@@ -390,9 +381,7 @@ const FALLBACK_TOOL_DEFINITIONS: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       required: ["filename"],
-      properties: {
-        filename: { type: "string", description: "Name of the file to read" },
-      },
+      properties: { filename: { type: "string", description: "Name of the file to read" } },
       additionalProperties: false,
     },
   },
@@ -411,19 +400,6 @@ const FALLBACK_TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "create_integration_from_url",
-    description: "Create a new Specialized Agent and Tool Integration by reading API documentation from a URL.",
-    inputSchema: {
-      type: "object",
-      required: ["url"],
-      properties: {
-        url: { type: "string", description: "URL of the API documentation" },
-        name: { type: "string", description: "Optional name for its integration" },
-      },
-      additionalProperties: false,
-    },
-  },
-  {
     name: "nexus_generate_image",
     description: "Generate high-quality images and illustrations. Images are saved to your workspace.",
     inputSchema: {
@@ -437,7 +413,24 @@ const FALLBACK_TOOL_DEFINITIONS: ToolDefinition[] = [
       additionalProperties: false,
     },
   },
+  {
+    name: "create_integration_from_url",
+    description: "Create a new Specialized Agent and Tool Integration by reading API documentation from a URL.",
+    inputSchema: {
+      type: "object",
+      required: ["url"],
+      properties: {
+        url: { type: "string", description: "URL of the API documentation" },
+        name: { type: "string", description: "Optional name for its integration" },
+      },
+      additionalProperties: false,
+    },
+  },
 ];
+
+// ---------------------------------------------------------------------------
+// Tool Catalog State & Refresh
+// ---------------------------------------------------------------------------
 
 const toolCatalogState: ToolCatalogState = {
   tools: [],
@@ -591,6 +584,11 @@ function getAvailableToolDefinitions(api: OpenClawPluginApi): ToolDefinition[] {
   return toolCatalogState.tools;
 }
 
+// ---------------------------------------------------------------------------
+// Remote tool execution — calls back into Nexus for tools that need
+// server-side data (integrations, email, calendar, etc.)
+// ---------------------------------------------------------------------------
+
 async function callNexusTool(params: {
   api: OpenClawPluginApi;
   sessionKey: string | undefined;
@@ -654,11 +652,17 @@ async function callNexusTool(params: {
   return payload;
 }
 
+// ---------------------------------------------------------------------------
+// Plugin registration
+// ---------------------------------------------------------------------------
+
 const nexusToolbridgePlugin = {
   id: "nexus-toolbridge",
   name: "Nexus Tool Bridge",
   description:
-    "Expose Nexus integration tools to OpenClaw by proxying Nexus /api/openclaw/tools/execute.",
+    "Expose Nexus integration tools to OpenClaw. Executes file tools locally for speed; " +
+    "proxies all other tools to Nexus /api/openclaw/tools/execute. " +
+    "Syncs per-user credentials via JIT API.",
   configSchema: emptyPluginConfigSchema(),
   register(api: OpenClawPluginApi) {
     void refreshCatalog(api, "startup");
@@ -671,6 +675,12 @@ const nexusToolbridgePlugin = {
     api.registerTool((ctx) => {
       const sessionKey = ctx.sessionKey;
       const toolDefinitions = getAvailableToolDefinitions(api);
+
+      // Fire-and-forget JIT credential sync for this user session
+      const nexusUser = extractNexusUserFromSessionKey(sessionKey);
+      if (nexusUser?.userId) {
+        void syncCredentialsIfNeeded(api, nexusUser.userId);
+      }
 
       return toolDefinitions.map((tool) => ({
         name: tool.name,
@@ -686,6 +696,24 @@ const nexusToolbridgePlugin = {
               ? (params as Record<string, unknown>)
               : {};
 
+          // Resolve userId for this execution
+          const user = extractNexusUserFromSessionKey(sessionKey);
+          const userId = user?.userId || "unknown";
+
+          // Local execution for file tools (avoids network round-trip)
+          if (LOCAL_TOOL_NAMES.has(tool.name)) {
+            try {
+              const localResult = await executeLocalTool(tool.name, args, userId, api);
+              return jsonResult({ tool: tool.name, result: localResult });
+            } catch (localErr) {
+              // If local execution fails, fall through to remote
+              api.logger.warn(
+                `[nexus-toolbridge] Local execution failed for ${tool.name}, falling back to remote: ${localErr instanceof Error ? localErr.message : String(localErr)}`,
+              );
+            }
+          }
+
+          // Remote execution via Nexus API
           const result = await callNexusTool({
             api,
             sessionKey,
