@@ -447,15 +447,21 @@ if [ -f "$CONFIG_FILE" ]; then
          # Clean up stale configs from previous v0.8.x experimental attempts
          | del(.agents.defaults.contextPruning)
          | del(.agents.defaults.streaming)
-         # Image model routing: used when the primary model lacks image/vision input.
-         # Gemini 3 Flash is fast + multimodal; GPT-4o is a solid fallback.
-         | .agents.defaults.imageModel = {
-             "primary": "google/gemini-3-flash-preview",
-             "fallbacks": [
-               "openai/gpt-4o",
-               "openrouter/google/gemini-3-flash-preview"
-             ]
-           }
+         # Image model routing: preserve user-configured image model if already set,
+         # otherwise default to Gemini 3 Flash + GPT-4o fallback.
+         | .agents.defaults.imageModel = (
+             if .agents.defaults.imageModel.primary != null
+                and .agents.defaults.imageModel.primary != ""
+             then .agents.defaults.imageModel
+             else {
+               "primary": "google/gemini-3-flash-preview",
+               "fallbacks": [
+                 "openai/gpt-4o",
+                 "openrouter/google/gemini-3-flash-preview"
+               ]
+             }
+             end
+           )
          # Auth profile routing: Nexus injects per-user keys via the official
          # `openclaw models auth paste-token` CLI (profile id = provider:userId).
          # The x-nexus-user trusted proxy header (set above) tells OpenClaw
