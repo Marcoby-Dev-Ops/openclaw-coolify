@@ -41,7 +41,8 @@ services:
       OPENCLAW_GATEWAY_RELOAD_MODE: '${OPENCLAW_GATEWAY_RELOAD_MODE:-hot}'
       OPENCLAW_GATEWAY_PORT: '${OPENCLAW_GATEWAY_PORT:-18790}'
       OPENCLAW_STATE_DIR: /data/.openclaw
-      OPENCLAW_WORKSPACE: /data/openclaw-workspace
+      OPENCLAW_WORKSPACE: /data/workspace
+      WORKSPACE_DIR: /data/workspace
       OPENAI_API_KEY: '${OPENAI_API_KEY}'
       ANTHROPIC_API_KEY: '${ANTHROPIC_API_KEY}'
       GEMINI_API_KEY: '${GEMINI_API_KEY}'
@@ -53,8 +54,7 @@ services:
       OPENCLAW_BETA: '${OPENCLAW_BETA:-false}'
     volumes:
       - 'openclaw-data:/data'
-      - 'nexus-workspace:/data/workspace'
-      - 'openclaw-workspace:/data/openclaw-workspace'
+      - '${SHARED_WORKSPACE_DIR:-/data/nexus/workspace}:/data/workspace'
     ports:
       - '18790:18790'
     depends_on:
@@ -123,8 +123,6 @@ networks:
 
 volumes:
   openclaw-data:
-  nexus-workspace:
-  openclaw-workspace:
   searxng-data:
   registry-data:
   registry-auth:
