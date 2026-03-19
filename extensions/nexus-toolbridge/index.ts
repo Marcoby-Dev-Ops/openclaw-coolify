@@ -59,12 +59,24 @@ const LOCAL_TOOL_NAMES = new Set([
   "nexus_list_files",
 ]);
 
+const SHARED_WORKSPACE_ROOT = "/data/workspace";
+const SYSTEM_WORKSPACE_DIR = path.join(SHARED_WORKSPACE_ROOT, "main");
+
+function sanitizeWorkspaceUserId(userId: string): string {
+  const trimmed = String(userId || "").trim();
+  if (!trimmed) return "";
+  return trimmed.replace(/[^A-Za-z0-9._-]/g, "_");
+}
+
 function resolveWorkspaceBase(userId: string): string {
+  const safeUserId = sanitizeWorkspaceUserId(userId);
+  if (!safeUserId) return SYSTEM_WORKSPACE_DIR;
+
   // Per-user workspace directory.  The shared volume is mounted at
   // /data/workspace with per-user sub-dirs (managed by Nexus's
   // workspaceFileService).  Fall back to the legacy flat path only if the
   // per-user directory does not exist yet.
-  const perUser = path.join("/data/workspace", userId);
+  const perUser = path.join(SHARED_WORKSPACE_ROOT, safeUserId);
   if (fs.existsSync(perUser)) return perUser;
 
   // Ensure the per-user directory exists on first use
@@ -72,8 +84,8 @@ function resolveWorkspaceBase(userId: string): string {
     fs.mkdirSync(perUser, { recursive: true });
     return perUser;
   } catch {
-    // Last resort — flat path (matches the optimized draft)
-    return "/data/workspace";
+    // Last resort — use the dedicated system workspace rather than the root.
+    return SYSTEM_WORKSPACE_DIR;
   }
 }
 

@@ -41,7 +41,7 @@ services:
       OPENCLAW_GATEWAY_RELOAD_MODE: '${OPENCLAW_GATEWAY_RELOAD_MODE:-hot}'
       OPENCLAW_GATEWAY_PORT: '${OPENCLAW_GATEWAY_PORT:-18790}'
       OPENCLAW_STATE_DIR: /data/.openclaw
-      OPENCLAW_WORKSPACE: /data/workspace
+      OPENCLAW_WORKSPACE: /data/workspace/main
       WORKSPACE_DIR: /data/workspace
       OPENAI_API_KEY: '${OPENAI_API_KEY}'
       ANTHROPIC_API_KEY: '${ANTHROPIC_API_KEY}'
