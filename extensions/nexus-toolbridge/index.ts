@@ -239,7 +239,7 @@ function normalizeInputSchema(input: unknown): ToolSchema {
   };
 }
 
-const LEGACY_SESSION_KEY_MARKERS = ["openai-user:", "nexus-openai-user:"] as const;
+const LEGACY_SESSION_KEY_MARKERS = ["openai-user:", "nexus-openai-user:", "openresponses-user:"] as const;
 
 function extractNexusUserFromSessionKey(
   sessionKey: string | undefined,
