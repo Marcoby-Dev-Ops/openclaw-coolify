@@ -1,10 +1,36 @@
+import * as pluginSdk from "openclaw/plugin-sdk";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
-import { emptyPluginConfigSchema, jsonResult } from "openclaw/plugin-sdk";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
 type ToolSchema = Record<string, unknown>;
+
+const emptyPluginConfigSchema =
+  typeof (pluginSdk as { emptyPluginConfigSchema?: unknown }).emptyPluginConfigSchema === "function"
+    ? (pluginSdk as { emptyPluginConfigSchema: () => ToolSchema }).emptyPluginConfigSchema
+    : () => ({
+        type: "object",
+        additionalProperties: false,
+        properties: {},
+      } satisfies ToolSchema);
+
+function toPluginToolResult(payload: unknown): unknown {
+  const helper = (pluginSdk as { jsonResult?: (value: unknown) => unknown }).jsonResult;
+  if (typeof helper === "function") {
+    return helper(payload);
+  }
+
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "result" in (payload as Record<string, unknown>)
+  ) {
+    return (payload as Record<string, unknown>).result;
+  }
+
+  return payload;
+}
 
 interface ToolDefinition {
   name: string;
@@ -591,14 +617,14 @@ function getAvailableToolDefinitions(api: OpenClawPluginApi): ToolDefinition[] {
 
   if (!hasCache) {
     void refreshCatalog(api, "cold-start");
-    return FALLBACK_TOOL_DEFINITIONS;
+    return FALLBACK_TOOL_DEFINITIONS.filter((tool) => tool.name.startsWith("nexus_"));
   }
 
   if (isStale && !toolCatalogState.refreshPromise) {
     void refreshCatalog(api, "ttl-expired");
   }
 
-  return toolCatalogState.tools;
+  return toolCatalogState.tools.filter((tool) => tool.name.startsWith("nexus_"));
 }
 
 // ---------------------------------------------------------------------------
@@ -730,7 +756,7 @@ const nexusToolbridgePlugin = {
           if (LOCAL_TOOL_NAMES.has(tool.name)) {
             try {
               const localResult = await executeLocalTool(tool.name, args, userId, api);
-              return jsonResult({ tool: tool.name, result: localResult });
+              return toPluginToolResult({ tool: tool.name, result: localResult });
             } catch (localErr) {
               // If local execution fails, fall through to remote
               api.logger.warn(
@@ -749,7 +775,7 @@ const nexusToolbridgePlugin = {
             signal,
           });
 
-          return jsonResult({
+          return toPluginToolResult({
             tool: tool.name,
             result,
           });
