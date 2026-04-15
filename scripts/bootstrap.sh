@@ -454,7 +454,7 @@ if [ -f "$CONFIG_FILE" ]; then
                 and .agents.defaults.imageModel.primary != ""
              then .agents.defaults.imageModel
              else {
-               "primary": "google/gemini-3-flash-preview",
+               "primary": "google-antigravity/gemini-3-flash-preview",
                "fallbacks": [
                  "openai/gpt-4o",
                  "openrouter/google/gemini-3-flash-preview"
