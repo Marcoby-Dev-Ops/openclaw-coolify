@@ -426,16 +426,14 @@ if [ -f "$CONFIG_FILE" ]; then
          | .gateway.auth.token = $token
          | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
          | .plugins.load.paths = ["/data/.openclaw/extensions/nexus-toolbridge"]
-         | .plugins.entries."google-gemini-cli-auth".enabled = ($enable_gemini_cli_auth == "1")
-         # Keep Gemini CLI auth opt-in. Nexus-managed Google auth should route
-         # through google-antigravity instead of forcing Code Assist credentials.
+         # google-gemini-cli-auth plugin was removed upstream in OpenClaw 2026.4.x.
+         # Drop any stale references from plugins.entries/plugins.allow so doctor
+         # doesn't flag warnings on every restart. Nexus-managed Google auth routes
+         # through google-antigravity and does not need the Code Assist plugin.
+         | del(.plugins.entries."google-gemini-cli-auth")
          | .plugins.allow = (
              (((.plugins.allow // []) + ["nexus-toolbridge"]) | unique)
-             | (if $enable_gemini_cli_auth == "1" then
-                  (. + ["google-gemini-cli-auth"] | unique)
-                else
-                  map(select(. != "google-gemini-cli-auth"))
-                end)
+             | map(select(. != "google-gemini-cli-auth" and . != "user"))
            )
          | .plugins.entries.whatsapp.enabled = false
          | .plugins.entries.telegram.enabled = false
@@ -476,6 +474,19 @@ if [ -f "$CONFIG_FILE" ]; then
              (.agents.defaults.model.primary as $p | .agents.defaults.models[$p] = {})
              | reduce (.agents.defaults.model.fallbacks[]?) as $fb (.; .agents.defaults.models[$fb] = {})
            else . end)
+         # BYOK cold-start: expose a curated set of OpenRouter free-tier models
+         # so users who connect OpenRouter (Marcoby's no-paid-provider recommendation)
+         # can pick a named free model in the UI instead of relying solely on the
+         # `openrouter/free` meta-router. All selected for tool-calling support and
+         # decent context for Nexus's tool-heavy workload.
+         | reduce (
+             [
+               "openrouter/openai/gpt-oss-120b:free",
+               "openrouter/google/gemma-4-31b-it:free",
+               "openrouter/minimax/minimax-m2.5:free",
+               "openrouter/z-ai/glm-4.5-air:free"
+             ] | .[]
+           ) as $fm (.; .agents.defaults.models[$fm] = (.agents.defaults.models[$fm] // {}))
          # 3. Authority Separation & Tool Tiering (v0.8)
          # Ensure sandboxed sessions (workers) can NEVER call Nexus tools.
          | .tools.profile = "full"
@@ -504,7 +515,7 @@ if [ -f "$CONFIG_FILE" ]; then
                    # Tier 1: Executive Brain - Orchestration only.
                    .default = false
                    | .tools = { "profile": "minimal", "allow": ["group:sessions", "group:messaging"] }
-                   | .model = { "primary": "openai-codex/gpt-5.4", "fallbacks": ["openrouter/anthropic/claude-sonnet-4-6", "openrouter/google/gemini-3-flash-preview"] }
+                   | .model = { "primary": "openrouter/free", "fallbacks": [] }
                  elif .id == "nexus" then
                    # Tier 2: Business Agent - full tool profile so plugin-registered nexus_* tools are included.
                    # Using profile:"full" avoids the timing issue where the nexus-toolbridge plugin
@@ -526,7 +537,7 @@ if [ -f "$CONFIG_FILE" ]; then
                        end
                      ),
                      "tools": { "profile": "full" },
-                     "model": { "primary": "openai-codex/gpt-5.4", "fallbacks": ["openrouter/anthropic/claude-sonnet-4-6", "openrouter/google/gemini-3-flash-preview"] }
+                     "model": { "primary": "openrouter/free", "fallbacks": [] }
                    }
                  else .
                  end
@@ -550,7 +561,7 @@ if [ -f "$CONFIG_FILE" ]; then
                      end
                    ),
                    "tools": { "profile": "full" },
-                   "model": { "primary": "openai-codex/gpt-5.4", "fallbacks": ["openrouter/anthropic/claude-sonnet-4-6", "openrouter/google/gemini-3-flash-preview"] }
+                   "model": { "primary": "openrouter/free", "fallbacks": [] }
                  }
                ] end
            )
