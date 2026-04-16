@@ -5,11 +5,14 @@ def with_or_without_nexus_tool(base):
     (base | map(select(. != "nexus_*" and . != "create_integration_from_url")) | unique)
   end;
 
-# 🛠️ Selective Model Enforcement (v0.8.2)
-# Soft Update: Only overwrite key fields if they are missing OR FORCE_MODEL_DEFAULTS=1
+# Selective Model Enforcement (v0.8.3)
+# Soft Update: Only overwrite primary if missing OR FORCE_MODEL_DEFAULTS=1.
+# Fallbacks are ALWAYS enforced so stale volume configs are cleaned up on restart.
 (if (.agents.defaults.model == null or $force_defaults == "1") then
    .agents.defaults.model = { "primary": $model, "fallbacks": (if ($fallbacks | fromjson?) then ($fallbacks | fromjson) else [] end) }
- else . end)
+ else
+   .agents.defaults.model.fallbacks = (if ($fallbacks | fromjson?) then ($fallbacks | fromjson) else [] end)
+ end)
 | (if $enable_gemini_cli_auth != "1" and (.agents.defaults.model.primary | tostring | startswith("google-gemini-cli")) then
      .agents.defaults.model.primary = (
        if ($model | tostring | startswith("google-gemini-cli")) then
@@ -19,13 +22,18 @@ def with_or_without_nexus_tool(base):
        end
      )
    else . end)
+| (if (.agents.defaults.model.primary | tostring | startswith("google-antigravity")) then
+     .agents.defaults.model.primary = "openrouter/free"
+   else . end)
 | .agents.defaults.model.fallbacks = (
     (.agents.defaults.model.fallbacks // []) |
     (if $enable_gemini_cli_auth != "1" then
        map(select((. | tostring | startswith("google-gemini-cli")) | not))
      else
        .
-     end)
+     end) |
+    map(select((. | tostring | startswith("google-antigravity")) | not)) |
+    map(select((. | tostring | startswith("openai-codex")) | not))
   )
 | (if (.env.OPENROUTER_API_KEY == null or $force_defaults == "1") then .env.OPENROUTER_API_KEY = $or_key else . end)
 | .gateway.auth.mode = "token"

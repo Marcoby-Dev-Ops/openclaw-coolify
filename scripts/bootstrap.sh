@@ -96,7 +96,7 @@ if [ -f "$CONFIG_FILE" ]; then
     # Default to OpenRouter Google Gemini if no primary model specified
     SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
     jq -f "$SCRIPT_DIR/openclaw-config.jq" \
-       --arg model "${OPENCLAW_AGENTS_DEFAULTS_MODEL_PRIMARY:-google/gemini-3-flash-preview}" \
+       --arg model "${OPENCLAW_AGENTS_DEFAULTS_MODEL_PRIMARY:-openrouter/free}" \
        --arg fallbacks "$FINAL_FALLBACKS" \
        --arg token "${OPENCLAW_GATEWAY_TOKEN:-sk-openclaw-local}" \
        --arg port "${OPENCLAW_GATEWAY_PORT:-18790}" \
