@@ -33,3 +33,6 @@ engines:
 
   - name: torch
     disabled: true
+
+  - name: wikidata
+    disabled: true
