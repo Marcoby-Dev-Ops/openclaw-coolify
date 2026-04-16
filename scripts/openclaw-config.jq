@@ -119,8 +119,7 @@ def with_or_without_nexus_tool(base):
                 }
               end
             ),
-            "tools": { "profile": "full" },
-            "model": { "primary": "openrouter/free", "fallbacks": [] }
+            "tools": { "profile": "full" }
           }
         else .
         end
@@ -142,8 +141,7 @@ def with_or_without_nexus_tool(base):
               }
             end
           ),
-          "tools": { "profile": "full" },
-          "model": { "primary": "openrouter/free", "fallbacks": [] }
+          "tools": { "profile": "full" }
         }
       ] end
   )
