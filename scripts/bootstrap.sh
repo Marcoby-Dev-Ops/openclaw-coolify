@@ -17,6 +17,17 @@
 set -e
 
 # ------------------------------------------------------------------
+# 📂 Path Setup (resolve all paths before anything else)
+# ------------------------------------------------------------------
+OPENCLAW_STATE="${OPENCLAW_STATE_DIR:-/data/.openclaw}"
+CONFIG_FILE="${OPENCLAW_CONFIG_PATH:-${OPENCLAW_STATE}/openclaw.json}"
+WORKSPACE_DIR="${WORKSPACE_DIR:-/data/workspace}"
+NEXUS_WORKSPACE_DIR="${NEXUS_WORKSPACE_DIR:-${OPENCLAW_WORKSPACE:-${WORKSPACE_DIR}/main}}"
+NEXUS_TOOLBRIDGE_AVAILABLE="${NEXUS_TOOLBRIDGE_AVAILABLE:-true}"
+
+mkdir -p "$OPENCLAW_STATE" "$WORKSPACE_DIR" "$NEXUS_WORKSPACE_DIR"
+
+# ------------------------------------------------------------------
 # 🛡️ Docker Socket Safety & Enforcement
 # ------------------------------------------------------------------
 export DOCKER_HOST="tcp://docker-proxy:2375"
@@ -50,22 +61,6 @@ if ! nc -z docker-proxy 2375 >/dev/null 2>&1; then
     echo "⚠️  WARNING: docker-proxy still not reachable after ${GRACE_SEC}s. Sandbox features may fail."
   }
 fi
-
-# ------------------------------------------------------------------
-# 🔄 ENFORCEMENT: Environment Overrides openclaw.json
-# ------------------------------------------------------------------
-if [ -f "$CONFIG_FILE" ]; then
-    echo "🔄 Enforcing Nexus/Marcoby configuration in openclaw.json..."
-    # Provider key warnings for missing tokens
-    if [ -z "$OPENROUTER_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'openrouter'; then
-      echo "⚠️  OpenRouter API key not found – models that require OpenRouter will be unavailable."
-    fi
-    if [ -z "$OPENAI_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'openai/gpt-4o'; then
-      echo "⚠️  OpenAI API key not found – OpenAI models will be unavailable."
-    fi
-    if [ -z "$ANTHROPIC_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'anthropic/claude-sonnet-4-6'; then
-      echo "⚠️  Anthropic API key not found – Anthropic models will be unavailable."
-    fi
 
 # ------------------------------------------------------------------
 # 🔄 ENFORCEMENT: Environment Overrides openclaw.json
@@ -278,4 +273,3 @@ echo ""
 echo "=================================================================="
 echo "🔧 Current ulimit is: $(ulimit -n)"
 exec openclaw gateway run
-fi
