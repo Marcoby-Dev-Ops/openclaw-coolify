@@ -1,8 +1,9 @@
 import * as pluginSdk from "openclaw/plugin-sdk";
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
-import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
+import crypto from "crypto";
+import fs from "fs";
+import path from "path";
+import { Buffer } from "buffer";
 
 type ToolSchema = Record<string, unknown>;
 
@@ -167,8 +168,8 @@ async function executeLocalTool(
     const subPath = String(args.path || "");
     const searchPath = subPath ? path.join(workspaceBase, sanitizeFilename(subPath)) : workspaceBase;
     if (!fs.existsSync(searchPath)) return { files: [] };
-    const entries = fs.readdirSync(searchPath);
-    const files = entries.map((name) => {
+    const entries: string[] = fs.readdirSync(searchPath);
+    const files = entries.map((name: string) => {
       const fullPath = path.join(searchPath, name);
       try {
         const stat = fs.statSync(fullPath);
@@ -643,9 +644,9 @@ async function callNexusTool(params: {
   const nexusApiUrl = resolveNexusApiUrl();
   const apiKey = resolveNexusOpenClawApiKey();
 
-  // Require canonical userId for all tool executions
-  const userId = params.userId;
-  if (!userId) {
+  // Extract userId from sessionKey
+  const nexusUser = extractNexusUserFromSessionKey(params.sessionKey);
+  if (!nexusUser || !nexusUser.userId) {
     throw new Error(
       "Missing canonical userId for tool execution. Nexus must provide userId in the tool execution context."
     );
@@ -712,9 +713,12 @@ const nexusToolbridgePlugin = {
     const refreshTimer = setInterval(() => {
       void refreshCatalog(api, "interval");
     }, TOOL_CATALOG_TTL_MS);
-    refreshTimer.unref?.();
+    // Only call unref if available (Node.js)
+    if (typeof (refreshTimer as any).unref === "function") {
+      (refreshTimer as any).unref();
+    }
 
-    api.registerTool((ctx) => {
+    api.registerTool((ctx: any) => {
       const sessionKey = ctx.sessionKey;
       const toolDefinitions = getAvailableToolDefinitions(api);
 
@@ -766,7 +770,7 @@ const nexusToolbridgePlugin = {
           // Remote execution via Nexus API
           const result = await callNexusTool({
             api,
-            sessionKey: effectiveSessionKey,
+            sessionKey: sessionKey,
             toolName: tool.name,
             args,
             toolCallId,
