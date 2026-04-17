@@ -643,12 +643,11 @@ async function callNexusTool(params: {
   const nexusApiUrl = resolveNexusApiUrl();
   const apiKey = resolveNexusOpenClawApiKey();
 
-  const nexusUser = extractNexusUserFromSessionKey(params.sessionKey);
-  if (!nexusUser?.userId) {
+  // Require canonical userId for all tool executions
+  const userId = params.userId;
+  if (!userId) {
     throw new Error(
-      "Cannot resolve Nexus user id for tool execution. " +
-        "Expected canonical Nexus identity context or a legacy sessionKey containing " +
-        "`openai-user:<nexusUserId>:<conversationId>`.",
+      "Missing canonical userId for tool execution. Nexus must provide userId in the tool execution context."
     );
   }
 
@@ -745,12 +744,11 @@ const nexusToolbridgePlugin = {
               ? (params as Record<string, unknown>)
               : {};
 
-          // Resolve userId — prefer the closure sessionKey, fall back to the
-          // module-level latestSessionKey to handle the race where tools are
-          // instantiated before the session key is fully propagated.
-          const effectiveSessionKey = sessionKey || latestSessionKey;
-          const user = extractNexusUserFromSessionKey(effectiveSessionKey);
-          const userId = user?.userId || "unknown";
+          // Require canonical userId from context (must be provided by Nexus)
+          const userId = ctx.userId;
+          if (!userId) {
+            throw new Error("Missing canonical userId for tool execution. Nexus must provide userId in the tool execution context.");
+          }
 
           // Local execution for file tools (avoids network round-trip)
           if (LOCAL_TOOL_NAMES.has(tool.name)) {
