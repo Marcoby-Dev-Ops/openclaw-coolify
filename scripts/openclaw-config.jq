@@ -68,16 +68,11 @@ def with_or_without_nexus_tool(base):
 | del(.agents.defaults.contextPruning)
 | del(.agents.defaults.streaming)
 | .agents.defaults.imageModel = (
-    if .agents.defaults.imageModel.primary != null and .agents.defaults.imageModel.primary != "" then
+    if (.agents.defaults.imageModel.primary != null and .agents.defaults.imageModel.primary != ""
+        and (.agents.defaults.imageModel.primary | tostring | startswith("google-antigravity") | not)) then
       .agents.defaults.imageModel
     else
-      {
-        "primary": "google-antigravity/gemini-3-flash-preview",
-        "fallbacks": [
-          "openai/gpt-4o",
-          "openrouter/google/gemini-3-flash-preview"
-        ]
-      }
+      { "primary": "", "fallbacks": [] }
     end
   )
 | .agents.defaults.sandbox.workspaceAccess = $sandbox_workspace_access
