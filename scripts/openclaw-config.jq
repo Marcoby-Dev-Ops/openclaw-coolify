@@ -57,6 +57,14 @@ def with_or_without_nexus_tool(base):
 | .plugins.entries.whatsapp.enabled = false
 | .plugins.entries.telegram.enabled = false
 | .agents.defaults.memorySearch.enabled = false
+| .agents.defaults.compaction = {
+    "mode": "safeguard",
+    "reserveTokensFloor": 24000,
+    "memoryFlush": {
+      "enabled": true,
+      "softThresholdTokens": 6000
+    }
+  }
 | del(.agents.defaults.contextPruning)
 | del(.agents.defaults.streaming)
 | .agents.defaults.imageModel = (
