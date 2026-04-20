@@ -72,8 +72,11 @@ const handler = async (event: any) => {
   if (event?.type !== "command" || event?.action !== "new") return;
 
   const sessionKey = String(event?.sessionKey || "").trim();
+  const metadata = event?.metadata && typeof event.metadata === "object" ? event.metadata : {};
+  const metadataUserId = String(metadata.userId || metadata.nexusUserId || '').trim();
   const nexusUser = extractNexusUserFromSessionKey(sessionKey);
-  if (!nexusUser?.userId) return;
+  const resolvedUserId = metadataUserId || nexusUser?.userId || '';
+  if (!resolvedUserId) return;
 
   try {
     const response = await fetch(`${resolveNexusApiUrl()}/api/openclaw/tools/execute`, {
@@ -81,7 +84,7 @@ const handler = async (event: any) => {
       headers: {
         "Content-Type": "application/json",
         "X-OpenClaw-Api-Key": resolveNexusOpenClawApiKey(),
-        "X-Nexus-User-Id": nexusUser.userId,
+        "X-Nexus-User-Id": resolvedUserId,
       },
       body: JSON.stringify({
         tool: "nexus_get_user_identity_context",

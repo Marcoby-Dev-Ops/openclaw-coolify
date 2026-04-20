@@ -38,7 +38,7 @@ def with_or_without_nexus_tool(base):
 | (if (.env.OPENROUTER_API_KEY == null or $force_defaults == "1") then .env.OPENROUTER_API_KEY = $or_key else . end)
 | .gateway.auth.mode = "token"
 | .gateway.auth.trustedProxy.userHeader = "x-nexus-user"
-| .gateway.auth.trustedProxy.allowUsers = []
+| .gateway.auth.trustedProxy.allowUsers = ["*"]
 | .gateway.mode = "local"
 | .gateway.trustedProxies = ["127.0.0.1", "::1", "172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"]
 | .gateway.port = ($port|tonumber)
@@ -119,6 +119,10 @@ def with_or_without_nexus_tool(base):
             "default": true,
             "name": "Nexus Assistant",
             "workspace": $nexus_workspace,
+            "model": {
+              "primary": "openrouter/google/gemini-3-flash-preview",
+              "fallbacks": ["openrouter/anthropic/claude-sonnet-4-6", "openrouter/openai/gpt-4o"]
+            },
             "sandbox": (
               if $nexus_sandbox_mode == "off" then
                 { "mode": "off" }
@@ -141,6 +145,10 @@ def with_or_without_nexus_tool(base):
           "default": true,
           "name": "Nexus Assistant",
           "workspace": $nexus_workspace,
+          "model": {
+            "primary": "openrouter/google/gemini-3-flash-preview",
+            "fallbacks": ["openrouter/anthropic/claude-sonnet-4-6", "openrouter/openai/gpt-4o"]
+          },
           "sandbox": (
             if $nexus_sandbox_mode == "off" then
               { "mode": "off" }

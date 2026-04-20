@@ -740,11 +740,24 @@ const nexusToolbridgePlugin = {
               ? (params as Record<string, unknown>)
               : {};
 
-          // Resolve userId: prefer direct ctx.userId, fall back to session key
-          // parsing for OpenClaw versions that do not populate ctx.userId.
-          const userId = ctx.userId || extractNexusUserFromSessionKey(sessionKey)?.userId;
+          // Resolve user identity from the richest available runtime context.
+          const metadata = (ctx && typeof ctx === "object" && ctx.metadata && typeof ctx.metadata === "object")
+            ? ctx.metadata as Record<string, unknown>
+            : {};
+          const metadataUserId =
+            (typeof metadata.userId === 'string' && metadata.userId.trim())
+            || (typeof metadata.nexusUserId === 'string' && metadata.nexusUserId.trim())
+            || '';
+          const effectiveSessionKey = sessionKey
+            || latestSessionKey
+            || (typeof metadata.sessionKey === 'string' ? metadata.sessionKey : '')
+            || (typeof metadata.nexusSessionKey === 'string' ? metadata.nexusSessionKey : '');
+          const userId =
+            (typeof ctx.userId === 'string' && ctx.userId.trim())
+            || metadataUserId
+            || extractNexusUserFromSessionKey(effectiveSessionKey)?.userId;
           if (!userId) {
-            throw new Error("Missing canonical userId for tool execution. Nexus must provide userId in the tool execution context.");
+            throw new Error("Cannot resolve Nexus user id for tool execution. Expected canonical Nexus identity context or a legacy sessionKey containing openai-user:<nexusUserId>:<conversationId>.");
           }
 
           // Local execution for file tools (avoids network round-trip)
