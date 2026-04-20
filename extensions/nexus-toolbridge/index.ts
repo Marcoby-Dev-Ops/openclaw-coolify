@@ -635,7 +635,7 @@ function getAvailableToolDefinitions(api: OpenClawPluginApi): ToolDefinition[] {
 
 async function callNexusTool(params: {
   api: OpenClawPluginApi;
-  sessionKey: string | undefined;
+  userId: string;
   toolName: string;
   args: Record<string, unknown>;
   toolCallId: string;
@@ -643,14 +643,6 @@ async function callNexusTool(params: {
 }): Promise<unknown> {
   const nexusApiUrl = resolveNexusApiUrl();
   const apiKey = resolveNexusOpenClawApiKey();
-
-  // Extract userId from sessionKey
-  const nexusUser = extractNexusUserFromSessionKey(params.sessionKey);
-  if (!nexusUser || !nexusUser.userId) {
-    throw new Error(
-      "Missing canonical userId for tool execution. Nexus must provide userId in the tool execution context."
-    );
-  }
 
   const correlationId = params.toolCallId || crypto.randomUUID();
   const endpoint = `${nexusApiUrl}/api/openclaw/tools/execute`;
@@ -663,7 +655,7 @@ async function callNexusTool(params: {
   }
 
   params.api.logger.info(
-    `[nexus-toolbridge] tool=${params.toolName} userId=${nexusUser.userId} corr=${correlationId} endpoint=${endpoint}`,
+    `[nexus-toolbridge] tool=${params.toolName} userId=${params.userId} corr=${correlationId} endpoint=${endpoint}`,
   );
 
   const response = await fetch(endpoint, {
@@ -671,7 +663,7 @@ async function callNexusTool(params: {
     headers: {
       "Content-Type": "application/json",
       "X-OpenClaw-Api-Key": apiKey,
-      "X-Nexus-User-Id": nexusUser.userId,
+      "X-Nexus-User-Id": params.userId,
       "X-Correlation-Id": correlationId,
     },
     body: JSON.stringify({ tool: params.toolName, args: params.args ?? {} }),
@@ -748,8 +740,9 @@ const nexusToolbridgePlugin = {
               ? (params as Record<string, unknown>)
               : {};
 
-          // Require canonical userId from context (must be provided by Nexus)
-          const userId = ctx.userId;
+          // Resolve userId: prefer direct ctx.userId, fall back to session key
+          // parsing for OpenClaw versions that do not populate ctx.userId.
+          const userId = ctx.userId || extractNexusUserFromSessionKey(sessionKey)?.userId;
           if (!userId) {
             throw new Error("Missing canonical userId for tool execution. Nexus must provide userId in the tool execution context.");
           }
@@ -770,7 +763,7 @@ const nexusToolbridgePlugin = {
           // Remote execution via Nexus API
           const result = await callNexusTool({
             api,
-            sessionKey: sessionKey,
+            userId,
             toolName: tool.name,
             args,
             toolCallId,
