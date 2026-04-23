@@ -11,10 +11,10 @@ const emptyPluginConfigSchema =
   typeof (pluginSdk as { emptyPluginConfigSchema?: unknown }).emptyPluginConfigSchema === "function"
     ? (pluginSdk as { emptyPluginConfigSchema: () => ToolSchema }).emptyPluginConfigSchema
     : () => ({
-        type: "object",
-        additionalProperties: false,
-        properties: {},
-      } satisfies ToolSchema);
+      type: "object",
+      additionalProperties: false,
+      properties: {},
+    } satisfies ToolSchema);
 
 function toPluginToolResult(payload: unknown): unknown {
   const helper = (pluginSdk as { jsonResult?: (value: unknown) => unknown }).jsonResult;
@@ -591,7 +591,7 @@ async function refreshCatalog(api: OpenClawPluginApi, reason: string): Promise<T
         if (previousVersion !== version) {
           api.logger.info(
             `[nexus-toolbridge] Refreshed tool catalog (${reason}): ${tools.length} tools` +
-              (version ? ` version=${version}` : ""),
+            (version ? ` version=${version}` : ""),
           );
         }
       } else {
@@ -744,20 +744,41 @@ const nexusToolbridgePlugin = {
           const metadata = (ctx && typeof ctx === "object" && ctx.metadata && typeof ctx.metadata === "object")
             ? ctx.metadata as Record<string, unknown>
             : {};
+
+          const headers = (ctx && typeof ctx === "object" && ctx.headers && typeof ctx.headers === "object")
+            ? ctx.headers as Record<string, unknown>
+            : {};
+
           const metadataUserId =
-            (typeof metadata.userId === 'string' && metadata.userId.trim())
-            || (typeof metadata.nexusUserId === 'string' && metadata.nexusUserId.trim())
-            || '';
+            (typeof metadata.userId === "string" && metadata.userId.trim())
+            || (typeof metadata.nexusUserId === "string" && metadata.nexusUserId.trim())
+            || (typeof metadata.nexus_user_id === "string" && metadata.nexus_user_id.trim())
+            || (typeof headers["x-nexus-user-id"] === "string" && (headers["x-nexus-user-id"] as string).trim())
+            || (typeof headers["x-nexus-user"] === "string" && (headers["x-nexus-user"] as string).trim())
+            || "";
+
           const effectiveSessionKey = sessionKey
             || latestSessionKey
-            || (typeof metadata.sessionKey === 'string' ? metadata.sessionKey : '')
-            || (typeof metadata.nexusSessionKey === 'string' ? metadata.nexusSessionKey : '');
+            || (typeof metadata.sessionKey === "string" ? metadata.sessionKey : "")
+            || (typeof metadata.nexusSessionKey === "string" ? metadata.nexusSessionKey : "")
+            || (typeof headers["x-openclaw-session-key"] === "string" ? headers["x-openclaw-session-key"] as string : "");
+
           const userId =
-            (typeof ctx.userId === 'string' && ctx.userId.trim())
+            (typeof ctx.userId === "string" && ctx.userId.trim())
             || metadataUserId
             || extractNexusUserFromSessionKey(effectiveSessionKey)?.userId;
+
           if (!userId) {
-            throw new Error("Cannot resolve Nexus user id for tool execution. Expected canonical Nexus identity context or a legacy sessionKey containing openai-user:<nexusUserId>:<conversationId>.");
+            api.logger.error("[nexus-toolbridge] Cannot resolve Nexus user id", {
+              ctxKeys: Object.keys(ctx || {}),
+              hasMetadata: !!ctx?.metadata,
+              metadataKeys: Object.keys(metadata),
+              hasHeaders: !!ctx?.headers,
+              headerKeys: Object.keys(headers),
+              sessionKey: !!sessionKey,
+              effectiveSessionKey: !!effectiveSessionKey
+            });
+            throw new Error("Cannot resolve Nexus user id from session context. Expected canonical Nexus identity context or a legacy sessionKey.");
           }
 
           // Local execution for file tools (avoids network round-trip)
