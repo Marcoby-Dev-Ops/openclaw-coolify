@@ -154,7 +154,7 @@ else
       "debounceMs": 300
     },
     "controlUi": { "enabled": false },
-    "trustedProxies": ["*"],
+    "trustedProxies": ["172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"],
     "tailscale": { "mode": "off", "resetOnExit": false },
     "auth": { "mode": "token", "token": "$TOKEN" },
     "http": {

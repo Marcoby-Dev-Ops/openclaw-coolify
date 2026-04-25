@@ -40,7 +40,7 @@ def with_or_without_nexus_tool(base):
 | .gateway.auth.trustedProxy.userHeader = "x-nexus-user"
 | .gateway.auth.trustedProxy.allowUsers = ["*"]
 | .gateway.mode = "local"
-| .gateway.trustedProxies = ["127.0.0.1", "::1", "172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"]
+| .gateway.trustedProxies = ["172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"]
 | .gateway.port = ($port|tonumber)
 | .gateway.bind = $bind
 | .gateway.reload.mode = $reload_mode
