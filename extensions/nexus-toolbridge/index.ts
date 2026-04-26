@@ -77,6 +77,47 @@ const credentialCache = new Map<string, CredentialCacheEntry>();
 let latestSessionKey: string | undefined;
 
 // ---------------------------------------------------------------------------
+// Per-session userId cache — maps sessionKey → userId so that execute()
+// closures can resolve identity even if ctx.sessionKey was not propagated
+// by the time the tool is invoked (e.g., after a process restart or when
+// OpenClaw calls execute() from a context that doesn't carry the session key).
+//
+// TTL matches SESSION_POLICY_TTL_MS on the Nexus side (30 min default).
+// ---------------------------------------------------------------------------
+const SESSION_USER_CACHE_TTL_MS = 30 * 60 * 1000;
+
+interface SessionUserEntry {
+  userId: string;
+  conversationId: string | null;
+  updatedAt: number;
+}
+
+const sessionUserCache = new Map<string, SessionUserEntry>();
+
+function purgeExpiredSessionUsers() {
+  const cutoff = Date.now() - SESSION_USER_CACHE_TTL_MS;
+  for (const [key, entry] of sessionUserCache.entries()) {
+    if (entry.updatedAt < cutoff) sessionUserCache.delete(key);
+  }
+}
+
+function cacheSessionUser(sessionKey: string, userId: string, conversationId: string | null) {
+  if (!sessionKey || !userId) return;
+  sessionUserCache.set(sessionKey, { userId, conversationId, updatedAt: Date.now() });
+}
+
+function lookupSessionUser(sessionKey: string | undefined): SessionUserEntry | null {
+  if (!sessionKey) return null;
+  const entry = sessionUserCache.get(sessionKey);
+  if (!entry) return null;
+  if (Date.now() - entry.updatedAt > SESSION_USER_CACHE_TTL_MS) {
+    sessionUserCache.delete(sessionKey);
+    return null;
+  }
+  return entry;
+}
+
+// ---------------------------------------------------------------------------
 // Local tool execution — tools that can run directly inside the OpenClaw
 // container without a network round-trip back to Nexus.
 // ---------------------------------------------------------------------------
@@ -445,13 +486,14 @@ const FALLBACK_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: "nexus_generate_image",
-    description: "Generate high-quality images and illustrations. Images are saved to your workspace.",
+    description: "PREFERRED image generation tool. Generates high-quality images using the user's connected image model — supports BFL/Flux (Black Forest Labs), OpenAI DALL-E, OpenRouter, and more. Routes automatically to BFL if the user has it connected. Use this tool instead of any built-in image_generate tool — only nexus_generate_image has access to the user's connected BFL API key and other private integrations.",
     inputSchema: {
       type: "object",
       required: ["prompt"],
       properties: {
         prompt: { type: "string", description: "Detailed description of the image to generate" },
-        aspect_ratio: { type: "string", enum: ["1:1", "16:9", "4:3", "3:2"], default: "1:1" },
+        aspect_ratio: { type: "string", enum: ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"], default: "1:1" },
+        seed: { type: "number", description: "Optional seed for reproducible generation (BFL/Flux models only)" },
         filename: { type: "string", description: "Optional filename for the saved image" },
       },
       additionalProperties: false,
@@ -636,6 +678,8 @@ function getAvailableToolDefinitions(api: OpenClawPluginApi): ToolDefinition[] {
 async function callNexusTool(params: {
   api: OpenClawPluginApi;
   userId: string;
+  conversationId?: string | null;
+  sessionKey?: string | null;
   toolName: string;
   args: Record<string, unknown>;
   toolCallId: string;
@@ -658,14 +702,22 @@ async function callNexusTool(params: {
     `[nexus-toolbridge] tool=${params.toolName} userId=${params.userId} corr=${correlationId} endpoint=${endpoint}`,
   );
 
+  const requestHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+    "X-OpenClaw-Api-Key": apiKey,
+    "X-Nexus-User-Id": params.userId,
+    "X-Correlation-Id": correlationId,
+  };
+  if (params.conversationId) {
+    requestHeaders["X-Nexus-Conversation-Id"] = params.conversationId;
+  }
+  if (params.sessionKey) {
+    requestHeaders["X-OpenClaw-Session-Key"] = params.sessionKey;
+  }
+
   const response = await fetch(endpoint, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-OpenClaw-Api-Key": apiKey,
-      "X-Nexus-User-Id": params.userId,
-      "X-Correlation-Id": correlationId,
-    },
+    headers: requestHeaders,
     body: JSON.stringify({ tool: params.toolName, args: params.args ?? {} }),
     signal: params.signal,
   });
@@ -720,10 +772,35 @@ const nexusToolbridgePlugin = {
         latestSessionKey = sessionKey;
       }
 
-      // Fire-and-forget JIT credential sync for this user session
+      // Opportunistically seed the session→user cache from the factory ctx.
+      // This ensures that execute() closures can resolve userId even if the
+      // ctx passed at call time is missing the session key.
       const nexusUser = extractNexusUserFromSessionKey(sessionKey);
-      if (nexusUser?.userId) {
-        void syncCredentialsIfNeeded(api, nexusUser.userId);
+      if (nexusUser?.userId && sessionKey) {
+        cacheSessionUser(sessionKey, nexusUser.userId, nexusUser.conversationId);
+      }
+
+      // Also try to seed from ctx.userId or ctx.metadata.userId if provided.
+      const ctxUserId =
+        (typeof ctx.userId === "string" && ctx.userId.trim())
+        || (ctx.metadata && typeof ctx.metadata === "object"
+          ? (
+            (typeof (ctx.metadata as any).userId === "string" && (ctx.metadata as any).userId.trim())
+            || (typeof (ctx.metadata as any).nexusUserId === "string" && (ctx.metadata as any).nexusUserId.trim())
+          )
+          : "")
+        || "";
+      if (ctxUserId && sessionKey && !nexusUser?.userId) {
+        cacheSessionUser(sessionKey, ctxUserId, null);
+      }
+
+      // Periodically evict stale entries (amortized, best-effort)
+      purgeExpiredSessionUsers();
+
+      // Fire-and-forget JIT credential sync for this user session
+      const resolvedFactoryUserId = nexusUser?.userId || ctxUserId;
+      if (resolvedFactoryUserId) {
+        void syncCredentialsIfNeeded(api, resolvedFactoryUserId);
       }
 
       return toolDefinitions.map((tool) => ({
@@ -763,22 +840,43 @@ const nexusToolbridgePlugin = {
             || (typeof metadata.nexusSessionKey === "string" ? metadata.nexusSessionKey : "")
             || (typeof headers["x-openclaw-session-key"] === "string" ? headers["x-openclaw-session-key"] as string : "");
 
+          // Resolve userId with layered fallbacks:
+          // 1. Direct ctx.userId (if OpenClaw provides it)
+          // 2. Metadata/header userId fields
+          // 3. Parse from session key string (handles agent:nexus:openai-user:<uid>:<cid> format)
+          // 4. Per-session cache populated by the factory when it last ran for this session
+          // 5. Parse from the latest known session key (module-level fallback for same-user calls)
+          const parsedFromEffectiveKey = extractNexusUserFromSessionKey(effectiveSessionKey);
+          const cachedEntry = lookupSessionUser(effectiveSessionKey) || lookupSessionUser(sessionKey || "");
+          const latestParsed = (latestSessionKey && latestSessionKey !== effectiveSessionKey)
+            ? extractNexusUserFromSessionKey(latestSessionKey)
+            : null;
+
           const userId =
             (typeof ctx.userId === "string" && ctx.userId.trim())
             || metadataUserId
-            || extractNexusUserFromSessionKey(effectiveSessionKey)?.userId;
+            || parsedFromEffectiveKey?.userId
+            || cachedEntry?.userId
+            || latestParsed?.userId;
 
           if (!userId) {
-            api.logger.error("[nexus-toolbridge] Cannot resolve Nexus user id", {
+            api.logger.error("[nexus-toolbridge] Cannot resolve Nexus user id for tool execution. Expected canonical Nexus identity context", {
               ctxKeys: Object.keys(ctx || {}),
               hasMetadata: !!ctx?.metadata,
               metadataKeys: Object.keys(metadata),
               hasHeaders: !!ctx?.headers,
               headerKeys: Object.keys(headers),
-              sessionKey: !!sessionKey,
-              effectiveSessionKey: !!effectiveSessionKey
+              hasFactorySessionKey: !!sessionKey,
+              hasEffectiveSessionKey: !!effectiveSessionKey,
+              hasLatestSessionKey: !!latestSessionKey,
+              cachedSessionCount: sessionUserCache.size,
             });
-            throw new Error("Cannot resolve Nexus user id from session context. Expected canonical Nexus identity context or a legacy sessionKey.");
+            throw new Error("Cannot resolve Nexus user id for tool execution. Expected canonical Nexus identity context");
+          }
+
+          // If this execution resolved a new userId+sessionKey pairing, cache it for future calls.
+          if (userId && effectiveSessionKey) {
+            cacheSessionUser(effectiveSessionKey, userId, parsedFromEffectiveKey?.conversationId ?? cachedEntry?.conversationId ?? null);
           }
 
           // Local execution for file tools (avoids network round-trip)
@@ -794,10 +892,19 @@ const nexusToolbridgePlugin = {
             }
           }
 
+          // Resolve conversationId from the best available source
+          const resolvedConversationId =
+            parsedFromEffectiveKey?.conversationId
+            || cachedEntry?.conversationId
+            || (typeof metadata.conversationId === "string" ? metadata.conversationId.trim() : null)
+            || null;
+
           // Remote execution via Nexus API
           const result = await callNexusTool({
             api,
             userId,
+            conversationId: resolvedConversationId,
+            sessionKey: effectiveSessionKey || null,
             toolName: tool.name,
             args,
             toolCallId,
