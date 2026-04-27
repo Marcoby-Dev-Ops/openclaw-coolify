@@ -135,8 +135,8 @@ def with_or_without_nexus_tool(base):
             "name": "Nexus Assistant",
             "workspace": $nexus_workspace,
             "model": {
-              "primary": "openrouter/google/gemini-3-flash-preview",
-              "fallbacks": ["openrouter/anthropic/claude-sonnet-4-6", "openrouter/openai/gpt-4o"]
+              "primary": $model,
+              "fallbacks": (if ($fallbacks | fromjson?) then ($fallbacks | fromjson) else [] end)
             },
             "sandbox": (
               if $nexus_sandbox_mode == "off" then
@@ -161,8 +161,8 @@ def with_or_without_nexus_tool(base):
           "name": "Nexus Assistant",
           "workspace": $nexus_workspace,
           "model": {
-            "primary": "openrouter/google/gemini-3-flash-preview",
-            "fallbacks": ["openrouter/anthropic/claude-sonnet-4-6", "openrouter/openai/gpt-4o"]
+            "primary": $model,
+            "fallbacks": (if ($fallbacks | fromjson?) then ($fallbacks | fromjson) else [] end)
           },
           "sandbox": (
             if $nexus_sandbox_mode == "off" then
