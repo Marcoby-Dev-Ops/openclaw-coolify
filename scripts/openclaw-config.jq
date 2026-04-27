@@ -84,6 +84,25 @@ def with_or_without_nexus_tool(base):
       "openrouter/minimax/minimax-m2.5:free",
       "openrouter/z-ai/glm-4.5-air:free"
     ] | .[]) as $fm (.; .agents.defaults.models[$fm] = (.agents.defaults.models[$fm] // {}))
+| reduce (
+    [
+      "anthropic/claude-haiku-4-5",
+      "anthropic/claude-sonnet-4-6",
+      "anthropic/claude-opus-4-6",
+      "openai/gpt-4o",
+      "openai/gpt-5.2",
+      "openai/gpt-5.4",
+      "openai-codex/gpt-5.1",
+      "openai-codex/gpt-5.2",
+      "openai-codex/gpt-5.4",
+      "github-copilot/gpt-4o",
+      "github-copilot/gpt-5",
+      "github-copilot/gpt-5-mini",
+      "github-copilot/claude-sonnet-4.6",
+      "google-antigravity/gemini-3-flash",
+      "google-antigravity/gemini-3.1-pro-low",
+      "google-antigravity/claude-sonnet-4-6"
+    ] | .[]) as $pm (.; .agents.defaults.models[$pm] = (.agents.defaults.models[$pm] // {}))
 | .tools.profile = "full"
 | del(.tools.alsoAllow)
 | .tools.sandbox.tools.allow = (
