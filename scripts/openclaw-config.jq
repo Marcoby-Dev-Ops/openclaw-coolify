@@ -22,9 +22,6 @@ def with_or_without_nexus_tool(base):
        end
      )
    else . end)
-| (if (.agents.defaults.model.primary | tostring | startswith("google-antigravity")) then
-     .agents.defaults.model.primary = "openrouter/free"
-   else . end)
 | .agents.defaults.model.fallbacks = (
     (.agents.defaults.model.fallbacks // []) |
     (if $enable_gemini_cli_auth != "1" then
@@ -32,7 +29,6 @@ def with_or_without_nexus_tool(base):
      else
        .
      end) |
-    map(select((. | tostring | startswith("google-antigravity")) | not)) |
     map(select((. | tostring | startswith("openai-codex")) | not))
   )
 | (if (.env.OPENROUTER_API_KEY == null or $force_defaults == "1") then .env.OPENROUTER_API_KEY = $or_key else . end)
