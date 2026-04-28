@@ -32,9 +32,14 @@ def with_or_without_nexus_tool(base):
     map(select((. | tostring | startswith("openai-codex")) | not))
   )
 | (if (.env.OPENROUTER_API_KEY == null or $force_defaults == "1") then .env.OPENROUTER_API_KEY = $or_key else . end)
-| .gateway.auth.mode = "token"
-| .gateway.auth.trustedProxy.userHeader = "x-nexus-user"
-| .gateway.auth.trustedProxy.allowUsers = ["*"]
+| .gateway.auth = {
+    "mode": "trusted-proxy",
+    "token": $token,
+    "trustedProxy": {
+      "userHeader": "x-nexus-user",
+      "allowUsers": ["*"]
+    }
+  }
 | .gateway.mode = "local"
 | .gateway.trustedProxies = ["172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"]
 | .gateway.port = ($port|tonumber)
@@ -46,7 +51,6 @@ def with_or_without_nexus_tool(base):
 | .gateway.controlUi.allowInsecureAuth = true
 | .gateway.http.endpoints.chatCompletions.enabled = true
 | .gateway.http.endpoints.responses.enabled = true
-| .gateway.auth.token = $token
 | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
 | .plugins.load.paths = ["/data/.openclaw/extensions/nexus-toolbridge"]
 | .plugins.allow |= (((. // []) + ["nexus-toolbridge", "ollama"]) | unique | map(select(. != "google-gemini-cli-auth" and . != "user")))
