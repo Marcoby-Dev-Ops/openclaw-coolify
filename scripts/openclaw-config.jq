@@ -74,6 +74,7 @@ def with_or_without_nexus_tool(base):
   }
 | del(.agents.defaults.contextPruning)
 | del(.agents.defaults.streaming)
+| .agents.defaults.timeoutSeconds = 300
 | .agents.defaults.imageModel = (
     if (.agents.defaults.imageModel.primary != null and .agents.defaults.imageModel.primary != ""
         and (.agents.defaults.imageModel.primary | tostring | startswith("google-antigravity") | not)) then
