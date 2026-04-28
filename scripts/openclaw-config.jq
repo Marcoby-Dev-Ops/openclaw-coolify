@@ -33,11 +33,8 @@ def with_or_without_nexus_tool(base):
   )
 | (if (.env.OPENROUTER_API_KEY == null or $force_defaults == "1") then .env.OPENROUTER_API_KEY = $or_key else . end)
 | .gateway.auth = {
-    "mode": "trusted-proxy",
-    "trustedProxy": {
-      "userHeader": "x-nexus-user",
-      "allowUsers": ["*"]
-    }
+    "mode": "token",
+    "token": $token
   }
 | .gateway.mode = "local"
 | .gateway.trustedProxies = ["172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8", "127.0.0.1", "::1"]
