@@ -57,7 +57,10 @@ def with_or_without_nexus_tool(base):
 | (if ($ollama_host | length) > 0 then
      .models.providers.ollama = {
        "baseUrl": $ollama_host,
-       "models": [{"id": "qwen2.5:3b", "name": "qwen2.5:3b"}]
+       "models": [
+         {"id": "llama3.2", "name": "llama3.2"},
+         {"id": "qwen2.5:3b", "name": "qwen2.5:3b"}
+       ]
      }
    else . end)
 | .agents.defaults.memorySearch.enabled = false
