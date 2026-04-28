@@ -41,7 +41,7 @@ def with_or_without_nexus_tool(base):
     }
   }
 | .gateway.mode = "local"
-| .gateway.trustedProxies = ["172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"]
+| .gateway.trustedProxies = ["172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8", "127.0.0.1", "::1"]
 | .gateway.port = ($port|tonumber)
 | .gateway.bind = $bind
 | .gateway.reload.mode = $reload_mode
