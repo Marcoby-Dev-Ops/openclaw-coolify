@@ -49,9 +49,11 @@ def with_or_without_nexus_tool(base):
 | .gateway.auth.token = $token
 | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
 | .plugins.load.paths = ["/data/.openclaw/extensions/nexus-toolbridge"]
-| .plugins.allow |= (((. // []) + ["nexus-toolbridge"]) | unique | map(select(. != "google-gemini-cli-auth" and . != "user")))
+| .plugins.allow |= (((. // []) + ["nexus-toolbridge", "ollama"]) | unique | map(select(. != "google-gemini-cli-auth" and . != "user")))
 | .plugins.entries.whatsapp.enabled = false
 | .plugins.entries.telegram.enabled = false
+| .plugins.entries.ollama.enabled = true
+| (if ($ollama_host | length) > 0 then .env.OLLAMA_HOST = $ollama_host else . end)
 | .agents.defaults.memorySearch.enabled = false
 | .agents.defaults.compaction = {
     "mode": "safeguard",

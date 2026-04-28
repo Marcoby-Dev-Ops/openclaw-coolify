@@ -110,6 +110,7 @@ if [ -f "$CONFIG_FILE" ]; then
        --arg nexus_sandbox_mode "${OPENCLAW_NEXUS_AGENT_SANDBOX_MODE:-off}" \
        --arg nexus_sandbox_scope "${OPENCLAW_NEXUS_AGENT_SANDBOX_SCOPE:-session}" \
        --arg force_defaults "${FORCE_MODEL_DEFAULTS:-0}" \
+       --arg ollama_host "${OLLAMA_HOST:-}" \
        "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
     # Clean up any stale google‑gemini‑cli‑auth entry (separate jq call for safety)
     jq 'if .plugins.entries then .plugins.entries |= del(.["google-gemini-cli-auth"]) else . end' "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
