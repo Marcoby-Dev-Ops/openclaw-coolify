@@ -54,6 +54,12 @@ def with_or_without_nexus_tool(base):
 | .plugins.entries.telegram.enabled = false
 | .plugins.entries.ollama.enabled = true
 | (if ($ollama_host | length) > 0 then .env.OLLAMA_HOST = $ollama_host else . end)
+| (if ($ollama_host | length) > 0 then
+     .models.providers.ollama = {
+       "baseUrl": $ollama_host,
+       "models": [{"id": "qwen2.5:3b", "name": "qwen2.5:3b"}]
+     }
+   else . end)
 | .agents.defaults.memorySearch.enabled = false
 | .agents.defaults.compaction = {
     "mode": "safeguard",
