@@ -138,7 +138,7 @@ services:
     networks:
       - coolify
     command: >
-      sh -c "sleep 10 && curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"qwen2.5:3b\"}'"
+      sh -c "sleep 10 && curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"qwen2.5:3b\"}' && tail -f /dev/null"
 
 networks:
   coolify:
