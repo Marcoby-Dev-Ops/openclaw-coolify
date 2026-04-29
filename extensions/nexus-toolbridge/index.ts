@@ -307,7 +307,7 @@ function normalizeInputSchema(input: unknown): ToolSchema {
   };
 }
 
-const LEGACY_SESSION_KEY_MARKERS = ["openai-user:", "nexus-openai-user:", "openresponses-user:"] as const;
+const LEGACY_SESSION_KEY_MARKERS = ["openai-user:", "nexus-openai-user:", "openresponses-user:", "openai:", "nexus:"] as const;
 
 function extractNexusUserFromSessionKey(
   sessionKey: string | undefined,
@@ -321,7 +321,10 @@ function extractNexusUserFromSessionKey(
     if (idx < 0) continue;
 
     const after = raw.slice(idx + marker.length);
-    const parts = after.split(":").filter(Boolean);
+    // If the segment immediately following the marker starts with 'user:', strip it
+    // e.g. openai:user:uid:cid -> uid:cid
+    const normalizedAfter = after.startsWith("user:") ? after.slice(5) : after;
+    const parts = normalizedAfter.split(":").filter(Boolean);
     if (parts.length === 0) continue;
 
     return {
@@ -854,6 +857,7 @@ const nexusToolbridgePlugin = {
 
           const userId =
             (typeof ctx.userId === "string" && ctx.userId.trim())
+            || (typeof ctx.user === "string" && ctx.user.trim() && !ctx.user.includes(":") ? ctx.user.trim() : "")
             || metadataUserId
             || parsedFromEffectiveKey?.userId
             || cachedEntry?.userId
