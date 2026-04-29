@@ -65,71 +65,9 @@ fi
 # ------------------------------------------------------------------
 # 🔄 ENFORCEMENT: Environment Overrides openclaw.json
 # ------------------------------------------------------------------
-if [ -f "$CONFIG_FILE" ]; then
-    echo "🔄 Enforcing Nexus/Marcoby configuration in openclaw.json..."
-    
-    # 1. Fallback Construction
-    # Clean up and convert comma-list to JSON array if it isn't already JSON
-    if [[ "$OPENCLAW_AGENTS_DEFAULTS_MODEL_FALLBACKS" != \[* ]]; then
-        # Convert "a, b, c" to ["a","b","c"]
-        JSON_FALLBACKS=$(echo "$OPENCLAW_AGENTS_DEFAULTS_MODEL_FALLBACKS" | jq -Rc 'split(",") | map(sub("^\\s+"; "")) | map(sub("\\s+$"; ""))')
-        FINAL_FALLBACKS="$JSON_FALLBACKS"
-    else
-        FINAL_FALLBACKS="$OPENCLAW_AGENTS_DEFAULTS_MODEL_FALLBACKS"
-    fi
-
-    if [ -z "$FINAL_FALLBACKS" ] || [ "$FINAL_FALLBACKS" == "[]" ]; then
-        FALLBACKS_ARRAY=()
-        [ -n "$OPENROUTER_API_KEY" ] && FALLBACKS_ARRAY+=("\"openrouter/anthropic/claude-sonnet-4-6\"" "\"openrouter/openai/gpt-4o\"")
-        [ -n "$OPENAI_API_KEY" ] && FALLBACKS_ARRAY+=("\"openai/gpt-4o\"")
-        [ -n "$ANTHROPIC_API_KEY" ] && FALLBACKS_ARRAY+=("\"anthropic/claude-sonnet-4-6\"")
-        
-        IFS=, ; FALLBACKS_STRING="${FALLBACKS_ARRAY[*]}" ; unset IFS
-        FINAL_FALLBACKS="[$FALLBACKS_STRING]"
-    fi
-    
-    if [ "$FINAL_FALLBACKS" == "[]" ]; then
-       FINAL_FALLBACKS='["openrouter/anthropic/claude-sonnet-4-6", "openrouter/openai/gpt-4o"]'
-    fi
-    
-    # 2. Apply Overrides
-    # Default to OpenRouter Google Gemini if no primary model specified
-    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-    jq -f "$SCRIPT_DIR/openclaw-config.jq" \
-       --arg model "${OPENCLAW_AGENTS_DEFAULTS_MODEL_PRIMARY:-openrouter/free}" \
-       --arg fallbacks "$FINAL_FALLBACKS" \
-       --arg token "${OPENCLAW_GATEWAY_TOKEN:-sk-openclaw-local}" \
-       --arg port "${OPENCLAW_GATEWAY_PORT:-18790}" \
-       --arg bind "${OPENCLAW_GATEWAY_BIND:-0.0.0.0}" \
-       --arg reload_mode "${OPENCLAW_GATEWAY_RELOAD_MODE:-hot}" \
-       --arg or_key "${OPENROUTER_API_KEY:-$OPENCLAW_DEFAULT_OPENROUTER_KEY}" \
-       --arg enable_gemini_cli_auth "${OPENCLAW_ENABLE_GOOGLE_GEMINI_CLI_AUTH:-0}" \
-       --arg nexus_workspace "$NEXUS_WORKSPACE_DIR" \
-       --arg nexus_plugin_available "$NEXUS_TOOLBRIDGE_AVAILABLE" \
-       --arg sandbox_workspace_access "${OPENCLAW_AGENTS_DEFAULTS_SANDBOX_WORKSPACEACCESS:-none}" \
-       --arg nexus_sandbox_mode "${OPENCLAW_NEXUS_AGENT_SANDBOX_MODE:-off}" \
-       --arg nexus_sandbox_scope "${OPENCLAW_NEXUS_AGENT_SANDBOX_SCOPE:-session}" \
-       --arg force_defaults "${FORCE_MODEL_DEFAULTS:-0}" \
-       --arg ollama_host "${OLLAMA_HOST:-}" \
-       "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
-    # Clean up any stale google‑gemini‑cli‑auth entry (separate jq call for safety)
-    jq 'if .plugins.entries then .plugins.entries |= del(.["google-gemini-cli-auth"]) else . end' "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
-    chmod 600 "$CONFIG_FILE"
-
-    # Provider key warnings for missing tokens
-    if [ -z "$OPENROUTER_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'openrouter'; then
-      echo "⚠️  OpenRouter API key not found – models that require OpenRouter will be unavailable."
-    fi
-    if [ -z "$OPENAI_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'openai/gpt-4o'; then
-      echo "⚠️  OpenAI API key not found – OpenAI models will be unavailable."
-    fi
-    if [ -z "$ANTHROPIC_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'anthropic/claude-sonnet-4-6'; then
-      echo "⚠️  Anthropic API key not found – Anthropic models will be unavailable."
-    fi
-else
-    # Create initial config file if it doesn't exist
+if [ ! -f "$CONFIG_FILE" ]; then
+    # Create minimal seed config — jq transform below applies all real settings
     echo "🏥 Generating initial openclaw.json..."
-    TOKEN=$(openssl rand -hex 24 2>/dev/null || node -e "console.log(require('crypto').randomBytes(24).toString('hex'))")
     cat >"$CONFIG_FILE" <<EOF
 {
   "plugins": {
@@ -146,24 +84,6 @@ else
     "install": { "nodeManager": "npm" }
   },
   "memory": { "slotPlugin": "memory-core" },
-  "gateway": {
-    "port": ${OPENCLAW_GATEWAY_PORT:-18790},
-    "mode": "local",
-    "bind": "0.0.0.0",
-    "reload": {
-      "mode": "${OPENCLAW_GATEWAY_RELOAD_MODE:-hot}",
-      "debounceMs": 300
-    },
-    "controlUi": { "enabled": false },
-    "trustedProxies": ["172.16.0.0/12", "192.168.0.0/16", "10.0.0.0/8"],
-    "tailscale": { "mode": "off", "resetOnExit": false },
-    "auth": { "mode": "token", "token": "$TOKEN" },
-    "http": {
-      "endpoints": {
-        "responses": { "enabled": true }
-      }
-    }
-  },
   "tools": {
     "profile": "full",
     "sandbox": {
@@ -200,7 +120,69 @@ else
 }
 EOF
     chmod 600 "$CONFIG_FILE"
-    echo "✅ Initial openclaw.json created with token: $TOKEN"
+    echo "✅ Seed openclaw.json created — applying env var overrides..."
+    # Force model + auth on fresh installs regardless of FORCE_MODEL_DEFAULTS
+    FORCE_MODEL_DEFAULTS=1
+fi
+
+echo "🔄 Enforcing Nexus/Marcoby configuration in openclaw.json..."
+
+# 1. Fallback Construction
+# Clean up and convert comma-list to JSON array if it isn't already JSON
+if [[ "$OPENCLAW_AGENTS_DEFAULTS_MODEL_FALLBACKS" != \[* ]]; then
+    # Convert "a, b, c" to ["a","b","c"]
+    JSON_FALLBACKS=$(echo "$OPENCLAW_AGENTS_DEFAULTS_MODEL_FALLBACKS" | jq -Rc 'split(",") | map(sub("^\\s+"; "")) | map(sub("\\s+$"; ""))')
+    FINAL_FALLBACKS="$JSON_FALLBACKS"
+else
+    FINAL_FALLBACKS="$OPENCLAW_AGENTS_DEFAULTS_MODEL_FALLBACKS"
+fi
+
+if [ -z "$FINAL_FALLBACKS" ] || [ "$FINAL_FALLBACKS" == "[]" ]; then
+    FALLBACKS_ARRAY=()
+    [ -n "$OPENROUTER_API_KEY" ] && FALLBACKS_ARRAY+=("\"openrouter/anthropic/claude-sonnet-4-6\"" "\"openrouter/openai/gpt-4o\"")
+    [ -n "$OPENAI_API_KEY" ] && FALLBACKS_ARRAY+=("\"openai/gpt-4o\"")
+    [ -n "$ANTHROPIC_API_KEY" ] && FALLBACKS_ARRAY+=("\"anthropic/claude-sonnet-4-6\"")
+
+    IFS=, ; FALLBACKS_STRING="${FALLBACKS_ARRAY[*]}" ; unset IFS
+    FINAL_FALLBACKS="[$FALLBACKS_STRING]"
+fi
+
+if [ "$FINAL_FALLBACKS" == "[]" ]; then
+   FINAL_FALLBACKS='["openrouter/anthropic/claude-sonnet-4-6", "openrouter/openai/gpt-4o"]'
+fi
+
+# 2. Apply Overrides
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+jq -f "$SCRIPT_DIR/openclaw-config.jq" \
+   --arg model "${OPENCLAW_AGENTS_DEFAULTS_MODEL_PRIMARY:-openrouter/free}" \
+   --arg fallbacks "$FINAL_FALLBACKS" \
+   --arg token "${OPENCLAW_GATEWAY_TOKEN:-sk-openclaw-local}" \
+   --arg port "${OPENCLAW_GATEWAY_PORT:-18790}" \
+   --arg bind "${OPENCLAW_GATEWAY_BIND:-0.0.0.0}" \
+   --arg reload_mode "${OPENCLAW_GATEWAY_RELOAD_MODE:-hot}" \
+   --arg or_key "${OPENROUTER_API_KEY:-$OPENCLAW_DEFAULT_OPENROUTER_KEY}" \
+   --arg enable_gemini_cli_auth "${OPENCLAW_ENABLE_GOOGLE_GEMINI_CLI_AUTH:-0}" \
+   --arg nexus_workspace "$NEXUS_WORKSPACE_DIR" \
+   --arg nexus_plugin_available "$NEXUS_TOOLBRIDGE_AVAILABLE" \
+   --arg sandbox_workspace_access "${OPENCLAW_AGENTS_DEFAULTS_SANDBOX_WORKSPACEACCESS:-none}" \
+   --arg nexus_sandbox_mode "${OPENCLAW_NEXUS_AGENT_SANDBOX_MODE:-off}" \
+   --arg nexus_sandbox_scope "${OPENCLAW_NEXUS_AGENT_SANDBOX_SCOPE:-session}" \
+   --arg force_defaults "${FORCE_MODEL_DEFAULTS:-0}" \
+   --arg ollama_host "${OLLAMA_HOST:-}" \
+   "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+# Clean up any stale google‑gemini‑cli‑auth entry (separate jq call for safety)
+jq 'if .plugins.entries then .plugins.entries |= del(.["google-gemini-cli-auth"]) else . end' "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+chmod 600 "$CONFIG_FILE"
+
+# Provider key warnings for missing tokens
+if [ -z "$OPENROUTER_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'openrouter'; then
+  echo "⚠️  OpenRouter API key not found – models that require OpenRouter will be unavailable."
+fi
+if [ -z "$OPENAI_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'openai/gpt-4o'; then
+  echo "⚠️  OpenAI API key not found – OpenAI models will be unavailable."
+fi
+if [ -z "$ANTHROPIC_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'anthropic/claude-sonnet-4-6'; then
+  echo "⚠️  Anthropic API key not found – Anthropic models will be unavailable."
 fi
 
 # ----------------------------
