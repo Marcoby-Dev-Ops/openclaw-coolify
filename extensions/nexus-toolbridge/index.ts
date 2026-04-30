@@ -75,6 +75,7 @@ const credentialCache = new Map<string, CredentialCacheEntry>();
 // called so that tool execute() closures always resolve the latest identity
 // even if they were instantiated before the session was fully established.
 let latestSessionKey: string | undefined;
+let latestResolvedNexusUser: SessionUserEntry | null = null;
 
 // ---------------------------------------------------------------------------
 // Per-session userId cache — maps sessionKey → userId so that execute()
@@ -103,7 +104,14 @@ function purgeExpiredSessionUsers() {
 
 function cacheSessionUser(sessionKey: string, userId: string, conversationId: string | null) {
   if (!sessionKey || !userId) return;
-  sessionUserCache.set(sessionKey, { userId, conversationId, updatedAt: Date.now() });
+  const entry = { userId, conversationId, updatedAt: Date.now() };
+  sessionUserCache.set(sessionKey, entry);
+  latestResolvedNexusUser = entry;
+}
+
+function cacheLatestUser(userId: string, conversationId: string | null) {
+  if (!userId) return;
+  latestResolvedNexusUser = { userId, conversationId, updatedAt: Date.now() };
 }
 
 function lookupSessionUser(sessionKey: string | undefined): SessionUserEntry | null {
@@ -818,6 +826,8 @@ const nexusToolbridgePlugin = {
         || "";
       if (ctxUserId && sessionKey && !nexusUser?.userId) {
         cacheSessionUser(sessionKey, ctxUserId, null);
+      } else if (ctxUserId) {
+        cacheLatestUser(ctxUserId, null);
       }
 
       // Periodically evict stale entries (amortized, best-effort)
@@ -872,6 +882,8 @@ const nexusToolbridgePlugin = {
           // 3. Parse from session key string (handles agent:nexus:openai-user:<uid>:<cid> format)
           // 4. Per-session cache populated by the factory when it last ran for this session
           // 5. Parse from the latest known session key (module-level fallback for same-user calls)
+          // 6. Last resolved user from the registerTool factory, for execute contexts
+          //    where OpenClaw omits session/metadata but the factory already synced.
           const parsedFromEffectiveKey = extractNexusUserFromSessionKey(effectiveSessionKey);
           const cachedEntry = lookupSessionUser(effectiveSessionKey) || lookupSessionUser(sessionKey || "");
           const latestParsed = (latestSessionKey && latestSessionKey !== effectiveSessionKey)
@@ -885,7 +897,8 @@ const nexusToolbridgePlugin = {
             || metadataUserId
             || parsedFromEffectiveKey?.userId
             || cachedEntry?.userId
-            || latestParsed?.userId;
+            || latestParsed?.userId
+            || latestResolvedNexusUser?.userId;
 
           if (!userId) {
             api.logger.error("[nexus-toolbridge] Cannot resolve Nexus user id for tool execution. Expected canonical Nexus identity context", {
@@ -898,6 +911,7 @@ const nexusToolbridgePlugin = {
               hasEffectiveSessionKey: !!effectiveSessionKey,
               hasLatestSessionKey: !!latestSessionKey,
               hasCtxUser: typeof ctx.user === "string" && ctx.user.trim().length > 0,
+              hasLatestResolvedUser: !!latestResolvedNexusUser?.userId,
               cachedSessionCount: sessionUserCache.size,
             });
             throw new Error("Cannot resolve Nexus user id for tool execution. Expected canonical Nexus identity context");
@@ -906,6 +920,8 @@ const nexusToolbridgePlugin = {
           // If this execution resolved a new userId+sessionKey pairing, cache it for future calls.
           if (userId && effectiveSessionKey) {
             cacheSessionUser(effectiveSessionKey, userId, parsedFromEffectiveKey?.conversationId ?? parsedFromCtxUser?.conversationId ?? cachedEntry?.conversationId ?? null);
+          } else if (userId) {
+            cacheLatestUser(userId, parsedFromCtxUser?.conversationId ?? latestResolvedNexusUser?.conversationId ?? null);
           }
 
           // Local execution for file tools (avoids network round-trip)
