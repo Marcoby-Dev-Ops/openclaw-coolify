@@ -68,6 +68,29 @@ function extractNexusUserFromSessionKey(
   return null;
 }
 
+function extractNexusUserFromContextValue(
+  value: unknown,
+): { userId: string; conversationId: string | null } | null {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+
+  const markerMatch = extractNexusUserFromSessionKey(raw);
+  if (markerMatch) return markerMatch;
+
+  const parts = raw.split(":").filter(Boolean);
+  if (parts.length >= 2) {
+    return {
+      userId: parts[0],
+      conversationId: parts.slice(1).join(":"),
+    };
+  }
+
+  return {
+    userId: raw,
+    conversationId: null,
+  };
+}
+
 const handler = async (event: any) => {
   if (event?.type !== "command" || event?.action !== "new") return;
 
@@ -75,7 +98,8 @@ const handler = async (event: any) => {
   const metadata = event?.metadata && typeof event.metadata === "object" ? event.metadata : {};
   const metadataUserId = String(metadata.userId || metadata.nexusUserId || '').trim();
   const nexusUser = extractNexusUserFromSessionKey(sessionKey);
-  const resolvedUserId = metadataUserId || nexusUser?.userId || '';
+  const contextUser = extractNexusUserFromContextValue(event?.userId || event?.user);
+  const resolvedUserId = metadataUserId || nexusUser?.userId || contextUser?.userId || '';
   if (!resolvedUserId) return;
 
   try {

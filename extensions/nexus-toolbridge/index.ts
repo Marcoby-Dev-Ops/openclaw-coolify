@@ -336,6 +336,29 @@ function extractNexusUserFromSessionKey(
   return null;
 }
 
+function extractNexusUserFromContextValue(
+  value: unknown,
+): { userId: string; conversationId: string | null } | null {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+
+  const markerMatch = extractNexusUserFromSessionKey(raw);
+  if (markerMatch) return markerMatch;
+
+  const parts = raw.split(":").filter(Boolean);
+  if (parts.length >= 2) {
+    return {
+      userId: parts[0],
+      conversationId: parts.slice(1).join(":"),
+    };
+  }
+
+  return {
+    userId: raw,
+    conversationId: null,
+  };
+}
+
 function resolveNexusApiUrl(): string {
   return (
     normalizeBaseUrl(process.env.NEXUS_API_URL) ||
@@ -854,10 +877,11 @@ const nexusToolbridgePlugin = {
           const latestParsed = (latestSessionKey && latestSessionKey !== effectiveSessionKey)
             ? extractNexusUserFromSessionKey(latestSessionKey)
             : null;
+          const parsedFromCtxUser = extractNexusUserFromContextValue(ctx.userId || ctx.user);
 
           const userId =
             (typeof ctx.userId === "string" && ctx.userId.trim())
-            || (typeof ctx.user === "string" && ctx.user.trim() && !ctx.user.includes(":") ? ctx.user.trim() : "")
+            || parsedFromCtxUser?.userId
             || metadataUserId
             || parsedFromEffectiveKey?.userId
             || cachedEntry?.userId
@@ -873,6 +897,7 @@ const nexusToolbridgePlugin = {
               hasFactorySessionKey: !!sessionKey,
               hasEffectiveSessionKey: !!effectiveSessionKey,
               hasLatestSessionKey: !!latestSessionKey,
+              hasCtxUser: typeof ctx.user === "string" && ctx.user.trim().length > 0,
               cachedSessionCount: sessionUserCache.size,
             });
             throw new Error("Cannot resolve Nexus user id for tool execution. Expected canonical Nexus identity context");
@@ -880,7 +905,7 @@ const nexusToolbridgePlugin = {
 
           // If this execution resolved a new userId+sessionKey pairing, cache it for future calls.
           if (userId && effectiveSessionKey) {
-            cacheSessionUser(effectiveSessionKey, userId, parsedFromEffectiveKey?.conversationId ?? cachedEntry?.conversationId ?? null);
+            cacheSessionUser(effectiveSessionKey, userId, parsedFromEffectiveKey?.conversationId ?? parsedFromCtxUser?.conversationId ?? cachedEntry?.conversationId ?? null);
           }
 
           // Local execution for file tools (avoids network round-trip)
