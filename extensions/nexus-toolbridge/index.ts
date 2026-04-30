@@ -103,15 +103,17 @@ function purgeExpiredSessionUsers() {
 }
 
 function cacheSessionUser(sessionKey: string, userId: string, conversationId: string | null) {
-  if (!sessionKey || !userId) return;
-  const entry = { userId, conversationId, updatedAt: Date.now() };
+  const normalizedUserId = normalizeNexusUserId(userId);
+  if (!sessionKey || !normalizedUserId) return;
+  const entry = { userId: normalizedUserId, conversationId, updatedAt: Date.now() };
   sessionUserCache.set(sessionKey, entry);
   latestResolvedNexusUser = entry;
 }
 
 function cacheLatestUser(userId: string, conversationId: string | null) {
-  if (!userId) return;
-  latestResolvedNexusUser = { userId, conversationId, updatedAt: Date.now() };
+  const normalizedUserId = normalizeNexusUserId(userId);
+  if (!normalizedUserId) return;
+  latestResolvedNexusUser = { userId: normalizedUserId, conversationId, updatedAt: Date.now() };
 }
 
 function lookupSessionUser(sessionKey: string | undefined): SessionUserEntry | null {
@@ -349,12 +351,17 @@ function extractNexusUserFromContextValue(
 ): { userId: string; conversationId: string | null } | null {
   const raw = String(value ?? "").trim();
   if (!raw) return null;
+  const lowered = raw.toLowerCase();
+  if (["main", "global", "nexus", "default"].includes(lowered)) return null;
 
   const markerMatch = extractNexusUserFromSessionKey(raw);
   if (markerMatch) return markerMatch;
 
   const parts = raw.split(":").filter(Boolean);
   if (parts.length >= 2) {
+    if (["agent", "session", "main", "global", "nexus", "default"].includes(parts[0].toLowerCase())) {
+      return null;
+    }
     return {
       userId: parts[0],
       conversationId: parts.slice(1).join(":"),
@@ -365,6 +372,14 @@ function extractNexusUserFromContextValue(
     userId: raw,
     conversationId: null,
   };
+}
+
+function normalizeNexusUserId(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const lowered = raw.toLowerCase();
+  if (["main", "global", "nexus", "default"].includes(lowered)) return "";
+  return raw;
 }
 
 function resolveNexusApiUrl(): string {
@@ -815,12 +830,13 @@ const nexusToolbridgePlugin = {
       }
 
       // Also try to seed from ctx.userId or ctx.metadata.userId if provided.
+      const parsedFactoryUser = extractNexusUserFromContextValue(ctx.userId || ctx.user);
       const ctxUserId =
-        (typeof ctx.userId === "string" && ctx.userId.trim())
+        parsedFactoryUser?.userId
         || (ctx.metadata && typeof ctx.metadata === "object"
           ? (
-            (typeof (ctx.metadata as any).userId === "string" && (ctx.metadata as any).userId.trim())
-            || (typeof (ctx.metadata as any).nexusUserId === "string" && (ctx.metadata as any).nexusUserId.trim())
+            normalizeNexusUserId((ctx.metadata as any).userId)
+            || normalizeNexusUserId((ctx.metadata as any).nexusUserId)
           )
           : "")
         || "";
@@ -863,11 +879,11 @@ const nexusToolbridgePlugin = {
             : {};
 
           const metadataUserId =
-            (typeof metadata.userId === "string" && metadata.userId.trim())
-            || (typeof metadata.nexusUserId === "string" && metadata.nexusUserId.trim())
-            || (typeof metadata.nexus_user_id === "string" && metadata.nexus_user_id.trim())
-            || (typeof headers["x-nexus-user-id"] === "string" && (headers["x-nexus-user-id"] as string).trim())
-            || (typeof headers["x-nexus-user"] === "string" && (headers["x-nexus-user"] as string).trim())
+            normalizeNexusUserId(metadata.userId)
+            || normalizeNexusUserId(metadata.nexusUserId)
+            || normalizeNexusUserId(metadata.nexus_user_id)
+            || normalizeNexusUserId(headers["x-nexus-user-id"])
+            || normalizeNexusUserId(headers["x-nexus-user"])
             || "";
 
           const effectiveSessionKey = sessionKey
@@ -891,14 +907,14 @@ const nexusToolbridgePlugin = {
             : null;
           const parsedFromCtxUser = extractNexusUserFromContextValue(ctx.userId || ctx.user);
 
-          const userId =
-            (typeof ctx.userId === "string" && ctx.userId.trim())
-            || parsedFromCtxUser?.userId
-            || metadataUserId
-            || parsedFromEffectiveKey?.userId
-            || cachedEntry?.userId
-            || latestParsed?.userId
-            || latestResolvedNexusUser?.userId;
+          const userId = [
+            parsedFromCtxUser?.userId,
+            metadataUserId,
+            parsedFromEffectiveKey?.userId,
+            cachedEntry?.userId,
+            latestParsed?.userId,
+            latestResolvedNexusUser?.userId,
+          ].map(normalizeNexusUserId).find(Boolean) || "";
 
           if (!userId) {
             api.logger.error("[nexus-toolbridge] Cannot resolve Nexus user id for tool execution. Expected canonical Nexus identity context", {

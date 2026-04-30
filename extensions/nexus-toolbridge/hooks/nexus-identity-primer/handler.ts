@@ -73,12 +73,17 @@ function extractNexusUserFromContextValue(
 ): { userId: string; conversationId: string | null } | null {
   const raw = String(value ?? "").trim();
   if (!raw) return null;
+  const lowered = raw.toLowerCase();
+  if (["main", "global", "nexus", "default"].includes(lowered)) return null;
 
   const markerMatch = extractNexusUserFromSessionKey(raw);
   if (markerMatch) return markerMatch;
 
   const parts = raw.split(":").filter(Boolean);
   if (parts.length >= 2) {
+    if (["agent", "session", "main", "global", "nexus", "default"].includes(parts[0].toLowerCase())) {
+      return null;
+    }
     return {
       userId: parts[0],
       conversationId: parts.slice(1).join(":"),
@@ -91,12 +96,20 @@ function extractNexusUserFromContextValue(
   };
 }
 
+function normalizeNexusUserId(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const lowered = raw.toLowerCase();
+  if (["main", "global", "nexus", "default"].includes(lowered)) return "";
+  return raw;
+}
+
 const handler = async (event: any) => {
   if (event?.type !== "command" || event?.action !== "new") return;
 
   const sessionKey = String(event?.sessionKey || "").trim();
   const metadata = event?.metadata && typeof event.metadata === "object" ? event.metadata : {};
-  const metadataUserId = String(metadata.userId || metadata.nexusUserId || '').trim();
+  const metadataUserId = normalizeNexusUserId(metadata.userId) || normalizeNexusUserId(metadata.nexusUserId);
   const nexusUser = extractNexusUserFromSessionKey(sessionKey);
   const contextUser = extractNexusUserFromContextValue(event?.userId || event?.user);
   const resolvedUserId = metadataUserId || nexusUser?.userId || contextUser?.userId || '';
