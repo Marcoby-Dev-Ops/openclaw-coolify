@@ -46,8 +46,6 @@ services:
       OPENAI_API_KEY: '${OPENAI_API_KEY}'
       ANTHROPIC_API_KEY: '${ANTHROPIC_API_KEY}'
       GEMINI_API_KEY: '${GEMINI_API_KEY}'
-      OLLAMA_BASE_URL: 'http://ollama:11434'
-      OLLAMA_HOST: 'http://ollama:11434'
       SANDBOX_CONTAINER: '${SANDBOX_CONTAINER:-false}'
       BASE_URL: 'https://${SERVICE_FQDN_OPENCLAW}'
       PUBLIC_URL: 'https://${SERVICE_FQDN_OPENCLAW}'
@@ -119,27 +117,6 @@ services:
       - SETGID
       - SETUID
 
-  ollama:
-    image: ollama/ollama:latest
-    restart: unless-stopped
-    networks:
-      - coolify
-    volumes:
-      - 'ollama_data:/root/.ollama'
-    environment:
-      - OLLAMA_MAX_LOADED_MODELS=1
-      - OLLAMA_NUM_PARALLEL=1
-      - OLLAMA_KEEP_ALIVE=5m
-
-  ollama-init:
-    image: curlimages/curl:latest
-    depends_on:
-      - ollama
-    networks:
-      - coolify
-    command: >
-      sh -c "sleep 10 && curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"qwen2.5:3b\"}' && tail -f /dev/null"
-
 networks:
   coolify:
     external: true
@@ -149,4 +126,3 @@ volumes:
   searxng-data:
   registry-data:
   registry-auth:
-  ollama_data:
