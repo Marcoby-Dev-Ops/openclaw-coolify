@@ -10,11 +10,14 @@ type ToolSchema = Record<string, unknown>;
 const emptyPluginConfigSchema =
   typeof (pluginSdk as { emptyPluginConfigSchema?: unknown }).emptyPluginConfigSchema === "function"
     ? (pluginSdk as { emptyPluginConfigSchema: () => ToolSchema }).emptyPluginConfigSchema
-    : () => ({
-      type: "object",
-      additionalProperties: false,
-      properties: {},
-    } satisfies ToolSchema);
+    : () => {
+      const schema: ToolSchema = {
+        type: "object",
+        additionalProperties: false,
+        properties: {},
+      };
+      return schema;
+    };
 
 function toPluginToolResult(payload: unknown): unknown {
   const helper = (pluginSdk as { jsonResult?: (value: unknown) => unknown }).jsonResult;
@@ -425,6 +428,222 @@ const FALLBACK_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: "nexus_get_integration_status",
     description: "Get current integration status for the signed-in Nexus user.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "nexus_trello_connect",
+    description: "Connect a Trello account by providing an API key and token for the current user.",
+    inputSchema: {
+      type: "object",
+      required: ["apiKey", "apiToken"],
+      properties: {
+        apiKey: { type: "string" },
+        apiToken: { type: "string" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_test_connection",
+    description: "Run a Trello health check for the connected account and return circuit breaker state.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "nexus_trello_get_boards",
+    description: "List Trello boards for the connected account.",
+    inputSchema: { type: "object", properties: { limit: { type: "number" } }, additionalProperties: false },
+  },
+  {
+    name: "nexus_trello_get_board",
+    description: "Get one Trello board by id or shortLink.",
+    inputSchema: {
+      type: "object",
+      required: ["boardId"],
+      properties: { boardId: { type: "string" } },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_get_lists",
+    description: "List Trello lists for a board.",
+    inputSchema: {
+      type: "object",
+      required: ["boardId"],
+      properties: { boardId: { type: "string" } },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_get_cards",
+    description: "List cards from a Trello list.",
+    inputSchema: {
+      type: "object",
+      required: ["listId"],
+      properties: {
+        listId: { type: "string" },
+        limit: { type: "number" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_create_board",
+    description: "Create a new Trello board.",
+    inputSchema: {
+      type: "object",
+      required: ["name"],
+      properties: {
+        name: { type: "string" },
+        desc: { type: "string" },
+        defaultLists: { type: "boolean" },
+        defaultLabels: { type: "boolean" },
+        organizationId: { type: "string" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_update_board",
+    description: "Update Trello board fields.",
+    inputSchema: {
+      type: "object",
+      required: ["boardId"],
+      properties: {
+        boardId: { type: "string" },
+        name: { type: "string" },
+        desc: { type: "string" },
+        closed: { type: "boolean" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_create_list",
+    description: "Create a new Trello list on a board.",
+    inputSchema: {
+      type: "object",
+      required: ["boardId", "name"],
+      properties: {
+        boardId: { type: "string" },
+        name: { type: "string" },
+        pos: { type: "string" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_update_list",
+    description: "Rename, reposition, or archive a Trello list.",
+    inputSchema: {
+      type: "object",
+      required: ["listId"],
+      properties: {
+        listId: { type: "string" },
+        name: { type: "string" },
+        closed: { type: "boolean" },
+        pos: { type: "string" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_get_card",
+    description: "Fetch a Trello card by id or shortLink.",
+    inputSchema: {
+      type: "object",
+      required: ["cardId"],
+      properties: { cardId: { type: "string" } },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_create_card",
+    description: "Create a card in a Trello list.",
+    inputSchema: {
+      type: "object",
+      required: ["listId", "name"],
+      properties: {
+        listId: { type: "string" },
+        name: { type: "string" },
+        desc: { type: "string" },
+        due: { type: "string" },
+        pos: { type: "string" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_update_card",
+    description: "Update Trello card fields.",
+    inputSchema: {
+      type: "object",
+      required: ["cardId"],
+      properties: {
+        cardId: { type: "string" },
+        name: { type: "string" },
+        desc: { type: "string" },
+        due: { type: "string" },
+        dueComplete: { type: "boolean" },
+        closed: { type: "boolean" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_move_card",
+    description: "Move a Trello card to another list or position.",
+    inputSchema: {
+      type: "object",
+      required: ["cardId"],
+      properties: {
+        cardId: { type: "string" },
+        listId: { type: "string" },
+        pos: { type: "string" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_add_checklist",
+    description: "Add a checklist to a Trello card.",
+    inputSchema: {
+      type: "object",
+      required: ["cardId", "name"],
+      properties: {
+        cardId: { type: "string" },
+        name: { type: "string" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_add_checklist_item",
+    description: "Add an item to a Trello checklist.",
+    inputSchema: {
+      type: "object",
+      required: ["checklistId", "name"],
+      properties: {
+        checklistId: { type: "string" },
+        name: { type: "string" },
+        checked: { type: "boolean" },
+        pos: { type: "string" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "nexus_trello_update_checklist_item",
+    description: "Check/uncheck or rename a checklist item.",
+    inputSchema: {
+      type: "object",
+      required: ["cardId", "checkItemId"],
+      properties: {
+        cardId: { type: "string" },
+        checkItemId: { type: "string" },
+        state: { type: "string", enum: ["complete", "incomplete"] },
+        name: { type: "string" },
+      },
+      additionalProperties: false,
+    },
   },
   {
     name: "nexus_resolve_email_provider",
