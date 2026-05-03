@@ -112,6 +112,8 @@ def with_or_without_nexus_tool(base):
       "github-copilot/gpt-5-mini",
       "github-copilot/claude-sonnet-4.6",
       "google-antigravity/gemini-3-flash",
+      "google-antigravity/gemini-3-flash-preview",
+      "google-antigravity/gemini-3.1-pro",
       "google-antigravity/gemini-3.1-pro-low",
       "google-antigravity/claude-sonnet-4-6"
     ] | .[]) as $pm (.; .agents.defaults.models[$pm] = (.agents.defaults.models[$pm] // {}))
