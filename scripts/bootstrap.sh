@@ -139,22 +139,26 @@ fi
 
 if [ -z "$FINAL_FALLBACKS" ] || [ "$FINAL_FALLBACKS" == "[]" ]; then
     FALLBACKS_ARRAY=()
-    [ -n "$OPENROUTER_API_KEY" ] && FALLBACKS_ARRAY+=("\"openrouter/anthropic/claude-sonnet-4-6\"" "\"openrouter/openai/gpt-4o\"")
-    [ -n "$OPENAI_API_KEY" ] && FALLBACKS_ARRAY+=("\"openai/gpt-4o\"")
-    [ -n "$ANTHROPIC_API_KEY" ] && FALLBACKS_ARRAY+=("\"anthropic/claude-sonnet-4-6\"")
+    [ -n "$GEMINI_API_KEY" ] && FALLBACKS_ARRAY+=("\"google/gemini-3.1-pro\"" "\"google/gemini-3-flash\"")
+    [ -n "$OPENROUTER_API_KEY" ] && FALLBACKS_ARRAY+=("\"openrouter/google/gemini-3.1-pro\"" "\"openrouter/openai/gpt-5.2\"" "\"openrouter/anthropic/claude-4.6-sonnet\"")
+    [ -n "$OPENAI_API_KEY" ] && FALLBACKS_ARRAY+=("\"openai/gpt-5.2\"" "\"openai/gpt-4o\"")
+    [ -n "$ANTHROPIC_API_KEY" ] && FALLBACKS_ARRAY+=("\"anthropic/claude-4.6-sonnet\"" "\"anthropic/claude-3-5-sonnet\"")
 
     IFS=, ; FALLBACKS_STRING="${FALLBACKS_ARRAY[*]}" ; unset IFS
     FINAL_FALLBACKS="[$FALLBACKS_STRING]"
 fi
 
 if [ "$FINAL_FALLBACKS" == "[]" ]; then
-   FINAL_FALLBACKS='["openrouter/anthropic/claude-sonnet-4-6", "openrouter/openai/gpt-4o"]'
+   FINAL_FALLBACKS='["openrouter/google/gemini-3.1-pro", "openrouter/openai/gpt-5.2", "openrouter/anthropic/claude-4.6-sonnet"]'
 fi
 
 # 2. Apply Overrides
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DEFAULT_PRIMARY="openrouter/free"
+[ -n "$GEMINI_API_KEY" ] && DEFAULT_PRIMARY="google/gemini-3-flash"
+
 jq -f "$SCRIPT_DIR/openclaw-config.jq" \
-   --arg model "${OPENCLAW_AGENTS_DEFAULTS_MODEL_PRIMARY:-openrouter/free}" \
+   --arg model "${OPENCLAW_AGENTS_DEFAULTS_MODEL_PRIMARY:-$DEFAULT_PRIMARY}" \
    --arg fallbacks "$FINAL_FALLBACKS" \
    --arg token "${OPENCLAW_GATEWAY_TOKEN:-sk-openclaw-local}" \
    --arg port "${OPENCLAW_GATEWAY_PORT:-18790}" \
@@ -178,11 +182,14 @@ chmod 600 "$CONFIG_FILE"
 if [ -z "$OPENROUTER_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'openrouter'; then
   echo "⚠️  OpenRouter API key not found – models that require OpenRouter will be unavailable."
 fi
-if [ -z "$OPENAI_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'openai/gpt-4o'; then
-  echo "⚠️  OpenAI API key not found – OpenAI models will be unavailable."
+if [ -z "$GEMINI_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'google/gemini'; then
+  echo "⚠️  Gemini API key not found – Google Gemini 3 models will be unavailable."
 fi
-if [ -z "$ANTHROPIC_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'anthropic/claude-sonnet-4-6'; then
-  echo "⚠️  Anthropic API key not found – Anthropic models will be unavailable."
+if [ -z "$OPENAI_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'openai/gpt-5'; then
+  echo "⚠️  OpenAI API key not found – GPT-5 models will be unavailable."
+fi
+if [ -z "$ANTHROPIC_API_KEY" ] && echo "$FINAL_FALLBACKS" | grep -q 'anthropic/claude-4'; then
+  echo "⚠️  Anthropic API key not found – Claude 4 models will be unavailable."
 fi
 
 # ----------------------------
