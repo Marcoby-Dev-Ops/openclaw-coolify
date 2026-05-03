@@ -4,7 +4,7 @@
 # BuildKit features: cache mounts, parallel builds, improved layer caching
 
 # Stage 1: Base system dependencies (rarely changes)
-FROM --platform=linux/amd64 node:lts-bookworm-slim AS base
+FROM node:lts-bookworm-slim AS base
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive \
