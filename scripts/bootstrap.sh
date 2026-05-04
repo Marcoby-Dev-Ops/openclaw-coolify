@@ -74,8 +74,6 @@ if [ ! -f "$CONFIG_FILE" ]; then
     "enabled": true,
     "allow": ["nexus-toolbridge"],
     "entries": {
-      "whatsapp": { "enabled": false },
-      "telegram": { "enabled": false },
       "nexus-toolbridge": { "enabled": true }
     }
   },
