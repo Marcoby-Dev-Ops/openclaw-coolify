@@ -139,17 +139,17 @@ fi
 
 if [ -z "$FINAL_FALLBACKS" ] || [ "$FINAL_FALLBACKS" == "[]" ]; then
     FALLBACKS_ARRAY=()
-    [ -n "$GEMINI_API_KEY" ] && FALLBACKS_ARRAY+=("\"google-antigravity/gemini-3.1-pro\"" "\"google-antigravity/gemini-3-flash-preview\"" "\"google-antigravity/gemini-3-flash\"")
-    [ -n "$OPENROUTER_API_KEY" ] && FALLBACKS_ARRAY+=("\"openrouter/google/gemini-3.1-pro\"" "\"openrouter/openai/gpt-5.2\"" "\"openrouter/anthropic/claude-4.6-sonnet\"")
-    [ -n "$OPENAI_API_KEY" ] && FALLBACKS_ARRAY+=("\"openai/gpt-5.2\"" "\"openai/gpt-4o\"")
-    [ -n "$ANTHROPIC_API_KEY" ] && FALLBACKS_ARRAY+=("\"anthropic/claude-4.6-sonnet\"" "\"anthropic/claude-3-5-sonnet\"")
+    [ -n "$GEMINI_API_KEY" ] && FALLBACKS_ARRAY+=("\"google-antigravity/gemini-3.1-pro\"" "\"google-antigravity/gemini-3-flash\"")
+    [ -n "$OPENROUTER_API_KEY" ] && FALLBACKS_ARRAY+=("\"openrouter/google/gemini-3.1-pro\"" "\"openrouter/openai/gpt-5.5\"" "\"openrouter/anthropic/claude-opus-4.7\"")
+    [ -n "$OPENAI_API_KEY" ] && FALLBACKS_ARRAY+=("\"openai/gpt-5.4\"" "\"openai/gpt-5.2\"")
+    [ -n "$ANTHROPIC_API_KEY" ] && FALLBACKS_ARRAY+=("\"anthropic/claude-opus-4-6\"" "\"anthropic/claude-sonnet-4-6\"")
 
     IFS=, ; FALLBACKS_STRING="${FALLBACKS_ARRAY[*]}" ; unset IFS
     FINAL_FALLBACKS="[$FALLBACKS_STRING]"
 fi
 
 if [ "$FINAL_FALLBACKS" == "[]" ]; then
-   FINAL_FALLBACKS='["openrouter/google/gemini-3.1-pro", "openrouter/openai/gpt-5.2", "openrouter/anthropic/claude-4.6-sonnet"]'
+   FINAL_FALLBACKS='["openrouter/google/gemini-3.1-pro", "openrouter/openai/gpt-5.5", "openrouter/anthropic/claude-opus-4.7"]'
 fi
 
 # 2. Apply Overrides
