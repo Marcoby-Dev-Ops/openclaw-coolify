@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # ------------------------------------------------------------------
 # 📣 NOTE TO DEVELOPERS
 # ------------------------------------------------------------------
@@ -12,8 +13,6 @@
 # This bootstrap script reads those variables and writes them into
 # openclaw.json.  Do NOT set these variables manually in an .env file –
 # they are managed automatically by Nexus.
-# ------------------------------------------------------------------
-#!/usr/bin/env bash
 set -e
 
 # ------------------------------------------------------------------
@@ -60,6 +59,8 @@ if ! nc -z docker-proxy 2375 >/dev/null 2>&1; then
 
     echo "⚠️  WARNING: docker-proxy still not reachable after ${GRACE_SEC}s. Sandbox features may fail."
   }
+
+  retry_docker_proxy &
 fi
 
 # ------------------------------------------------------------------
@@ -112,7 +113,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
     },
     "list": [
       { "id": "main", "name": "default", "workspace": "${OPENCLAW_WORKSPACE:-/data/openclaw-workspace}"},
-      { "id": "nexus", "default": true, "name": "Nexus Assistant", "workspace": "$NEXUS_WORKSPACE_DIR", "sandbox": { "mode": "${OPENCLAW_NEXUS_AGENT_SANDBOX_MODE:-off}" }, "tools": { "profile": "full" } }
+      { "id": "nexus", "default": true, "name": "Nexus Assistant", "workspace": "$NEXUS_WORKSPACE_DIR", "sandbox": { "mode": "${OPENCLAW_NEXUS_AGENT_SANDBOX_MODE:-non-main}" }, "tools": { "profile": "full" } }
     ]
   }
 }
@@ -160,14 +161,14 @@ jq -f "$SCRIPT_DIR/openclaw-config.jq" \
    --arg fallbacks "$FINAL_FALLBACKS" \
    --arg token "${OPENCLAW_GATEWAY_TOKEN:-sk-openclaw-local}" \
    --arg port "${OPENCLAW_GATEWAY_PORT:-18790}" \
-   --arg bind "${OPENCLAW_GATEWAY_BIND:-0.0.0.0}" \
+   --arg bind "${OPENCLAW_GATEWAY_BIND:-lan}" \
    --arg reload_mode "${OPENCLAW_GATEWAY_RELOAD_MODE:-hot}" \
    --arg or_key "${OPENROUTER_API_KEY:-$OPENCLAW_DEFAULT_OPENROUTER_KEY}" \
    --arg enable_gemini_cli_auth "${OPENCLAW_ENABLE_GOOGLE_GEMINI_CLI_AUTH:-0}" \
    --arg nexus_workspace "$NEXUS_WORKSPACE_DIR" \
    --arg nexus_plugin_available "$NEXUS_TOOLBRIDGE_AVAILABLE" \
    --arg sandbox_workspace_access "${OPENCLAW_AGENTS_DEFAULTS_SANDBOX_WORKSPACEACCESS:-none}" \
-   --arg nexus_sandbox_mode "${OPENCLAW_NEXUS_AGENT_SANDBOX_MODE:-off}" \
+   --arg nexus_sandbox_mode "${OPENCLAW_NEXUS_AGENT_SANDBOX_MODE:-non-main}" \
    --arg nexus_sandbox_scope "${OPENCLAW_NEXUS_AGENT_SANDBOX_SCOPE:-session}" \
    --arg force_defaults "${FORCE_MODEL_DEFAULTS:-0}" \
    --arg ollama_host "${OLLAMA_HOST:-}" \
@@ -243,16 +244,13 @@ echo "=================================================================="
 echo "🦞 OpenClaw is ready!"
 echo "=================================================================="
 echo ""
-echo "🔑 Access Token: $TOKEN"
+echo "🔑 Gateway auth: token mode enabled"
 echo ""
-echo "🌍 Service URL (Local): http://localhost:${OPENCLAW_GATEWAY_PORT:-18790}?token=$TOKEN"
-if [ -n "$SERVICE_FQDN_OPENCLAW" ]; then
-    echo "☁️  Service URL (Public): https://${SERVICE_FQDN_OPENCLAW}?token=$TOKEN"
-    echo "    (Wait for cloud tunnel to propagate if just started)"
-fi
+echo "🌍 Service URL (Internal): http://openclaw:${OPENCLAW_GATEWAY_PORT:-18790}"
+echo "🔒 Direct public OpenClaw access is disabled; use the Nexus UI/API package instead."
 echo ""
 echo "👉 Onboarding:"
-echo "   1. Access the UI using the link above."
+echo "   1. Access OpenClaw through Nexus."
 echo "   2. To approve this machine, run inside the container:"
 echo "      openclaw-approve"
 echo "   3. To start the onboarding wizard:"
