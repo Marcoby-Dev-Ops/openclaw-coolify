@@ -61,6 +61,7 @@ interface ToolCatalogState {
   etag: string | null;
   fetchedAt: number;
   refreshPromise: Promise<ToolDefinition[]> | null;
+  nexusApiUrl: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -387,8 +388,10 @@ function normalizeNexusUserId(value: unknown): string {
 
 function resolveNexusApiUrl(): string {
   return (
+    toolCatalogState.nexusApiUrl ||
     normalizeBaseUrl(process.env.NEXUS_API_URL) ||
     normalizeBaseUrl(process.env.NEXUS_BASE_URL) ||
+    normalizeBaseUrl(process.env.FRONTEND_URL) ||
     "https://napp.marcoby.net"
   );
 }
@@ -792,6 +795,7 @@ const toolCatalogState: ToolCatalogState = {
   etag: null,
   fetchedAt: 0,
   refreshPromise: null,
+  nexusApiUrl: null,
 };
 
 function normalizeCatalogTool(tool: NonNullable<CatalogResponse["tools"]>[number]): ToolDefinition | null {
@@ -867,6 +871,11 @@ async function fetchCatalogFromNexus(api: OpenClawPluginApi): Promise<{
 
   if (tools.length === 0) {
     api.logger.warn("[nexus-toolbridge] Nexus catalog returned zero tools; keeping current cache");
+  }
+
+  const nexusApiUrl = String(response.headers.get("x-nexus-api-url") || "").trim() || null;
+  if (nexusApiUrl) {
+    toolCatalogState.nexusApiUrl = nexusApiUrl;
   }
 
   return {
