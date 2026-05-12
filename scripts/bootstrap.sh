@@ -137,7 +137,7 @@ fi
 
 if [ -z "$FINAL_FALLBACKS" ] || [ "$FINAL_FALLBACKS" == "[]" ]; then
     FALLBACKS_ARRAY=()
-    [ -n "$GEMINI_API_KEY" ] && FALLBACKS_ARRAY+=("\"google-antigravity/gemini-3.1-pro\"" "\"google-antigravity/gemini-3-flash\"")
+    [ -n "$GEMINI_API_KEY" ] && FALLBACKS_ARRAY+=("\"google-antigravity/gemini-3.1-pro-preview\"" "\"google-antigravity/gemini-3-flash-preview\"" "\"google-antigravity/gemini-2.5-pro\"")
     [ -n "$OPENROUTER_API_KEY" ] && FALLBACKS_ARRAY+=("\"openrouter/google/gemini-3.1-pro\"" "\"openrouter/openai/gpt-5.5\"" "\"openrouter/anthropic/claude-opus-4.7\"")
     [ -n "$OPENAI_API_KEY" ] && FALLBACKS_ARRAY+=("\"openai/gpt-5.4\"" "\"openai/gpt-5.2\"")
     [ -n "$ANTHROPIC_API_KEY" ] && FALLBACKS_ARRAY+=("\"anthropic/claude-opus-4-6\"" "\"anthropic/claude-sonnet-4-6\"")
@@ -147,13 +147,13 @@ if [ -z "$FINAL_FALLBACKS" ] || [ "$FINAL_FALLBACKS" == "[]" ]; then
 fi
 
 if [ "$FINAL_FALLBACKS" == "[]" ]; then
-   FINAL_FALLBACKS='["openrouter/google/gemini-3.1-pro", "openrouter/openai/gpt-5.5", "openrouter/anthropic/claude-opus-4.7"]'
+   FINAL_FALLBACKS='["openrouter/google/gemini-3.1-pro-preview", "openrouter/openai/gpt-5.5", "openrouter/anthropic/claude-opus-4.7"]'
 fi
 
 # 2. Apply Overrides
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DEFAULT_PRIMARY="openrouter/free"
-[ -n "$GEMINI_API_KEY" ] && DEFAULT_PRIMARY="google-antigravity/gemini-3.1-pro"
+[ -n "$GEMINI_API_KEY" ] && DEFAULT_PRIMARY="google-antigravity/gemini-3-flash-preview"
 
 jq -f "$SCRIPT_DIR/openclaw-config.jq" \
    --arg model "${OPENCLAW_AGENTS_DEFAULTS_MODEL_PRIMARY:-$DEFAULT_PRIMARY}" \
