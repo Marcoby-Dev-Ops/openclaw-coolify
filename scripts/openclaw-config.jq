@@ -137,6 +137,42 @@ def prune_unmanaged_plugins:
       "google-antigravity/gemini-3.1-pro-low",
       "google-antigravity/claude-sonnet-4-6"
     ] | .[]) as $pm (.; .agents.defaults.models[$pm] = (.agents.defaults.models[$pm] // {}))
+| reduce (
+    [
+      "openrouter/anthropic/claude-haiku-4.5",
+      "openrouter/anthropic/claude-sonnet-4.6",
+      "openrouter/anthropic/claude-opus-4.7",
+      "openrouter/openai/gpt-5",
+      "openrouter/openai/gpt-5-mini",
+      "openrouter/openai/gpt-5-nano",
+      "openrouter/openai/gpt-5.4",
+      "openrouter/openai/gpt-5.4-mini",
+      "openrouter/openai/gpt-5.4-nano",
+      "openrouter/openai/gpt-5.5",
+      "openrouter/openai/gpt-4o",
+      "openrouter/google/gemini-3-flash-preview",
+      "openrouter/google/gemini-3.1-pro-preview",
+      "openrouter/google/gemini-3.1-flash-lite",
+      "openrouter/google/gemini-2.5-pro",
+      "openrouter/google/gemini-2.5-flash",
+      "openrouter/google/gemini-2.5-flash-lite",
+      "openrouter/x-ai/grok-4",
+      "openrouter/x-ai/grok-4-fast",
+      "openrouter/x-ai/grok-4.1-fast",
+      "openrouter/x-ai/grok-4.20",
+      "openrouter/deepseek/deepseek-v3.2",
+      "openrouter/deepseek/deepseek-chat-v3.1",
+      "openrouter/deepseek/deepseek-r1",
+      "openrouter/moonshotai/kimi-k2.5",
+      "openrouter/moonshotai/kimi-k2-thinking",
+      "openrouter/moonshotai/kimi-k2",
+      "openrouter/qwen/qwen3-coder",
+      "openrouter/qwen/qwen3-coder-plus",
+      "openrouter/qwen/qwen3-max",
+      "openrouter/meta-llama/llama-4-maverick",
+      "openrouter/meta-llama/llama-4-scout",
+      "openrouter/mistralai/mistral-large-2512"
+    ] | .[]) as $orm (.; .agents.defaults.models[$orm] = (.agents.defaults.models[$orm] // {}))
 | .tools.profile = "full"
 | del(.tools.alsoAllow)
 | .tools.sandbox.tools.allow = (
