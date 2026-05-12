@@ -173,8 +173,16 @@ jq -f "$SCRIPT_DIR/openclaw-config.jq" \
    --arg force_defaults "${FORCE_MODEL_DEFAULTS:-0}" \
    --arg ollama_host "${OLLAMA_HOST:-}" \
    "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
-# Clean up any stale google‑gemini‑cli‑auth entry (separate jq call for safety)
-jq 'if .plugins.entries then .plugins.entries |= del(.["google-gemini-cli-auth"]) else . end' "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+# Clean up stale external plugin entries. Nexus owns plugin exposure for this package.
+jq '
+  ["brave","diffs","google-gemini-cli-auth","ollama","telegram","user","whatsapp"] as $stale_plugins
+  | if .plugins.entries then
+      .plugins.entries |= with_entries(.key as $plugin_id | select(($stale_plugins | index($plugin_id)) | not))
+    else . end
+  | if .plugins.allow then
+      .plugins.allow |= map(. as $plugin_id | select(($stale_plugins | index($plugin_id)) | not))
+    else . end
+' "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
 chmod 600 "$CONFIG_FILE"
 
 # Provider key warnings for missing tokens

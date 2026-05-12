@@ -5,6 +5,28 @@ def with_or_without_nexus_tool(base):
     (base | map(select(. != "nexus_*" and . != "create_integration_from_url")) | unique)
   end;
 
+def unmanaged_plugin_ids:
+  [
+    "brave",
+    "diffs",
+    "google-gemini-cli-auth",
+    "ollama",
+    "telegram",
+    "user",
+    "whatsapp"
+  ];
+
+def prune_unmanaged_plugins:
+  .plugins.entries = (
+    (.plugins.entries // {})
+    | with_entries(.key as $plugin_id | select((unmanaged_plugin_ids | index($plugin_id)) | not))
+  )
+  | .plugins.allow = (
+    (.plugins.allow // [])
+    | map(. as $plugin_id | select((unmanaged_plugin_ids | index($plugin_id)) | not))
+    | unique
+  );
+
 # Selective Model Enforcement (v0.8.3)
 # Soft Update: Only overwrite primary if missing OR FORCE_MODEL_DEFAULTS=1.
 # Fallbacks are ALWAYS enforced so stale volume configs are cleaned up on restart.
@@ -47,12 +69,10 @@ def with_or_without_nexus_tool(base):
 | .gateway.controlUi.allowInsecureAuth = true
 | .gateway.http.endpoints.chatCompletions.enabled = true
 | .gateway.http.endpoints.responses.enabled = true
+| prune_unmanaged_plugins
 | .plugins.entries."nexus-toolbridge".enabled = ($nexus_plugin_available == "true")
 | .plugins.load.paths = ["/data/.openclaw/extensions/nexus-toolbridge"]
-| .plugins.allow |= (((. // []) + ["nexus-toolbridge", "ollama"]) | unique | map(select(. != "google-gemini-cli-auth" and . != "user")))
-| .plugins.entries.whatsapp.enabled = false
-| .plugins.entries.telegram.enabled = false
-| .plugins.entries.ollama.enabled = true
+| .plugins.allow |= (((. // []) + ["nexus-toolbridge"]) | unique)
 | (if ($ollama_host | length) > 0 then .env.OLLAMA_HOST = $ollama_host else . end)
 | (if ($ollama_host | length) > 0 then
      .models.providers.ollama = {
