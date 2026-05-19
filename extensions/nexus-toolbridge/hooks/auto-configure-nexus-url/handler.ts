@@ -31,11 +31,11 @@ function discoverNexusApiUrl(): string | null {
     }
   }
 
-  // 2. Check NEXUS_FRONTEND_URL and derive /api
+  // 2. Check NEXUS_FRONTEND_URL — return bare base; toolbridge appends /api/openclaw/... itself
   if (process.env.NEXUS_FRONTEND_URL) {
-    const frontend = String(process.env.NEXUS_FRONTEND_URL).trim();
+    const frontend = String(process.env.NEXUS_FRONTEND_URL).trim().replace(/\/+$/, '');
     if (frontend && frontend.startsWith('http')) {
-      return `${frontend}/api`;
+      return frontend.replace(/\/api$/, '');
     }
   }
 

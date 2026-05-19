@@ -391,6 +391,7 @@ function resolveNexusApiUrl(): string {
     toolCatalogState.nexusApiUrl ||
     normalizeBaseUrl(process.env.NEXUS_API_URL) ||
     normalizeBaseUrl(process.env.NEXUS_BASE_URL) ||
+    normalizeBaseUrl(process.env.NEXUS_FRONTEND_URL) ||
     normalizeBaseUrl(process.env.FRONTEND_URL) ||
     "https://napp.marcoby.net"
   );
