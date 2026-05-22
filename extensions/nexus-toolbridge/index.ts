@@ -1003,6 +1003,30 @@ async function callNexusTool(params: {
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
+    // Operator-context gate: Nexus has surfaced an operator_context_request to
+    // the client and is waiting for the operator to supply context or
+    // authorization. The next user turn will resume this tool call
+    // deterministically (carries `resumeToolCall` in the payload), so the
+    // model must stop and wait — not retry, not synthesize a result.
+    if (
+      response.status === 409 &&
+      payload &&
+      typeof payload === "object" &&
+      (payload as { code?: string }).code === "OPERATOR_CONTEXT_REQUIRED"
+    ) {
+      const req = (payload as { operatorContextRequest?: { toolNames?: string[]; asks?: Array<{ kind: string; key: string }> } }).operatorContextRequest;
+      const missing = Array.isArray(req?.asks)
+        ? req!.asks.map((ask) => `${ask.kind}:${ask.key}`).join(", ")
+        : "operator input";
+      const tools = Array.isArray(req?.toolNames) ? req!.toolNames.join(", ") : params.toolName;
+      params.api.logger.info(
+        `[nexus-toolbridge] tool=${params.toolName} blocked by operator-context gate; chooser surfaced to user. missing=${missing}`,
+      );
+      throw new Error(
+        `OPERATOR_CONTEXT_REQUIRED: ${tools} requires operator ${missing}. The user has been prompted; do not retry or claim completion. Wait for their next message before resuming.`,
+      );
+    }
+
     const errMsg =
       (payload && typeof payload === "object" && "error" in payload && (payload as { error?: string }).error) ||
       `Nexus tool execution failed (HTTP ${response.status})`;
