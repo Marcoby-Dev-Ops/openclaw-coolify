@@ -105,6 +105,19 @@ def prune_unmanaged_plugins:
   )
 | .agents.defaults.sandbox.workspaceAccess = $sandbox_workspace_access
 | .skills.allowBundled = ["*"]
+| .agents.defaults.models |= (if . then with_entries(
+    .key as $k |
+    select(
+      ($k | startswith("google/") | not) and
+      ($k | startswith("openai/gpt-3") | not) and
+      ($k | startswith("openai/gpt-4") | not) and
+      ($k | startswith("openai/text-") | not) and
+      ($k | startswith("anthropic/claude-1") | not) and
+      ($k | startswith("anthropic/claude-2") | not) and
+      ($k | startswith("anthropic/claude-3-") | not) and
+      ($k | startswith("ollama/") | not)
+    )
+  ) else . end)
 | (if (.agents.defaults.model != null) then
     (.agents.defaults.model.primary as $p | .agents.defaults.models[$p] = {})
     | reduce (.agents.defaults.model.fallbacks[]?) as $fb (.; .agents.defaults.models[$fb] = {})
