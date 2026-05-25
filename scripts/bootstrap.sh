@@ -139,7 +139,7 @@ fi
 if [ -z "$FINAL_FALLBACKS" ] || [ "$FINAL_FALLBACKS" == "[]" ]; then
     FALLBACKS_ARRAY=()
     [ -n "$GEMINI_API_KEY" ] && FALLBACKS_ARRAY+=("\"google-antigravity/gemini-3.1-pro-preview\"" "\"google-antigravity/gemini-3-flash-preview\"" "\"google-antigravity/gemini-2.5-pro\"")
-    [ -n "$OPENROUTER_API_KEY" ] && FALLBACKS_ARRAY+=("\"openrouter/google/gemini-3.1-pro\"" "\"openrouter/openai/gpt-5.5\"" "\"openrouter/anthropic/claude-opus-4.7\"")
+    [ -n "$OPENROUTER_API_KEY" ] && FALLBACKS_ARRAY+=("\"openrouter/google/gemini-3.1-pro-preview\"" "\"openrouter/openai/gpt-5.5\"" "\"openrouter/anthropic/claude-opus-4.7\"")
     [ -n "$OPENAI_API_KEY" ] && FALLBACKS_ARRAY+=("\"openai/gpt-5.4\"" "\"openai/gpt-5.2\"")
     [ -n "$ANTHROPIC_API_KEY" ] && FALLBACKS_ARRAY+=("\"anthropic/claude-opus-4-6\"" "\"anthropic/claude-sonnet-4-6\"")
 
@@ -153,7 +153,8 @@ fi
 
 # 2. Apply Overrides
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-DEFAULT_PRIMARY="openrouter/free"
+DEFAULT_PRIMARY="openrouter/auto"
+[ -n "$OPENROUTER_API_KEY" ] && DEFAULT_PRIMARY="openrouter/anthropic/claude-sonnet-4.6"
 [ -n "$GEMINI_API_KEY" ] && DEFAULT_PRIMARY="google-antigravity/gemini-3-flash-preview"
 
 jq -f "$SCRIPT_DIR/openclaw-config.jq" \
@@ -163,7 +164,7 @@ jq -f "$SCRIPT_DIR/openclaw-config.jq" \
    --arg port "${OPENCLAW_GATEWAY_PORT:-18790}" \
    --arg bind "${OPENCLAW_GATEWAY_BIND:-lan}" \
    --arg reload_mode "${OPENCLAW_GATEWAY_RELOAD_MODE:-hot}" \
-   --arg or_key "${OPENROUTER_API_KEY:-$OPENCLAW_DEFAULT_OPENROUTER_KEY}" \
+   --arg or_key "${OPENROUTER_API_KEY:-}" \
    --arg enable_gemini_cli_auth "${OPENCLAW_ENABLE_GOOGLE_GEMINI_CLI_AUTH:-0}" \
    --arg nexus_workspace "$NEXUS_WORKSPACE_DIR" \
    --arg nexus_plugin_available "$NEXUS_TOOLBRIDGE_AVAILABLE" \

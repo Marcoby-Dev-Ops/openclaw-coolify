@@ -191,7 +191,10 @@ def prune_unmanaged_plugins:
       "openrouter/qwen/qwen3-max",
       "openrouter/meta-llama/llama-4-maverick",
       "openrouter/meta-llama/llama-4-scout",
-      "openrouter/mistralai/mistral-large-2512"
+      "openrouter/mistralai/mistral-large-2512",
+      "openrouter/nvidia/nemotron-3-super-120b-a12b:free",
+      "openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "openrouter/nvidia/nemotron-nano-9b-v2:free"
     ] | .[]) as $orm (.; .agents.defaults.models[$orm] = (.agents.defaults.models[$orm] // {}))
 | .tools.profile = "full"
 | del(.tools.alsoAllow)
