@@ -65,8 +65,15 @@ def prune_unmanaged_plugins:
 | .gateway.reload.mode = $reload_mode
 | .gateway.reload.debounceMs = 300
 | .gateway.controlUi.enabled = false
+# allowedOrigins must stay permissive: server-to-server calls from the Nexus
+# container don't send an Origin header, and OpenClaw treats `[]` as
+# "deny all". Combined with dangerouslyAllowHostHeaderOriginFallback=false,
+# this killed Nexus↔OpenClaw connectivity. Keep "*" — the gateway is
+# internal-only (mode: "local", LAN bind) and token-authed, so origin
+# permissiveness is not the real attack surface.
 | .gateway.controlUi.allowedOrigins = ["*"]
-| .gateway.controlUi.allowInsecureAuth = true
+| .gateway.controlUi.allowInsecureAuth = false
+| .gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback = true
 | .gateway.http.endpoints.chatCompletions.enabled = true
 | .gateway.http.endpoints.responses.enabled = true
 | prune_unmanaged_plugins
@@ -115,7 +122,12 @@ def prune_unmanaged_plugins:
       ($k | startswith("anthropic/claude-1") | not) and
       ($k | startswith("anthropic/claude-2") | not) and
       ($k | startswith("anthropic/claude-3-") | not) and
-      ($k | startswith("ollama/") | not)
+      ($k | startswith("ollama/") | not) and
+      # openai-codex provider is not declared in models.providers; listing
+      # any openai-codex/* model in defaults.models crashes strict-mode
+      # resolution with a FailoverError. Strip until the provider is wired
+      # (or graduate to github-copilot/* which IS declared and works).
+      ($k | startswith("openai-codex/") | not)
     )
   ) else . end)
 | (if (.agents.defaults.model != null) then
@@ -137,9 +149,6 @@ def prune_unmanaged_plugins:
       "openai/gpt-4o",
       "openai/gpt-5.2",
       "openai/gpt-5.4",
-      "openai-codex/gpt-5.1",
-      "openai-codex/gpt-5.2",
-      "openai-codex/gpt-5.4",
       "github-copilot/gpt-4o",
       "github-copilot/gpt-5",
       "github-copilot/gpt-5-mini",
