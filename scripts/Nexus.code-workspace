@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": "../../Nexus"
+		},
+		{
+			"path": "../../Pulse"
+		},
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"chat.tools.terminal.autoApprove": {
+			"ssh": true
+		}
+	}
+}
