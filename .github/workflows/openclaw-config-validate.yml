@@ -1,0 +1,51 @@
+name: Validate OpenClaw Config
+
+on:
+  push:
+    paths:
+      - 'openclaw.json'
+      - 'scripts/apply_openclaw_config.sh'
+      - '.github/workflows/openclaw-config-validate.yml'
+  pull_request:
+    paths:
+      - 'openclaw.json'
+      - 'scripts/apply_openclaw_config.sh'
+      - '.github/workflows/openclaw-config-validate.yml'
+
+jobs:
+  validate-openclaw-config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Validate openclaw.json syntax
+        if: exists('openclaw.json')
+        run: |
+          jq empty openclaw.json
+
+      - name: Check model entries for id and name fields
+        if: exists('openclaw.json')
+        run: |
+          missing=$(jq -r '
+            .models.providers // {} | to_entries[]? as $p |
+            ($p.value.models // [])[]? | select((.id==null) or (.name==null)) | $p.key
+          ' openclaw.json | sed '/^$/d')
+          if [ -n "$missing" ]; then
+            echo "ERROR: One or more models are missing 'id' or 'name' fields:" >&2
+            echo "$missing" >&2
+            exit 1
+          fi
+
+      - name: Lint apply_openclaw_config.sh
+        run: |
+          shellcheck scripts/apply_openclaw_config.sh
+
+      - name: Validate config with script (dry run)
+        if: exists('openclaw.json')
+        run: |
+          bash scripts/apply_openclaw_config.sh openclaw.json /tmp/openclaw.json.dryrun
+          echo "Dry run complete."
