@@ -2,6 +2,10 @@
 .env
 .DS_Store
 
+# OpenClaw runtime config + backups (contain gateway token / provider keys — never commit)
+openclaw.json
+openclaw.json.*
+
 # Dependencies
 node_modules/
 
