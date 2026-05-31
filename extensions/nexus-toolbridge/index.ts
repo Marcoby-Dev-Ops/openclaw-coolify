@@ -799,6 +799,11 @@ const toolCatalogState: ToolCatalogState = {
   nexusApiUrl: null,
 };
 
+// Suppress repeated identical catalog-fetch errors to avoid log spam
+let lastCatalogFetchErrorAt = 0;
+let lastCatalogFetchErrorMessage = "";
+const CATALOG_ERROR_SUPPRESSION_MS = 60_000; // 1 minute
+
 function normalizeCatalogTool(tool: NonNullable<CatalogResponse["tools"]>[number]): ToolDefinition | null {
   const name = String(tool?.name || "").trim();
   if (!name) return null;
@@ -919,7 +924,25 @@ async function refreshCatalog(api: OpenClawPluginApi, reason: string): Promise<T
       }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      api.logger.error(`[nexus-toolbridge] Failed to refresh tool catalog (${reason}): ${errMsg}`);
+      const now = Date.now();
+
+      // Suppress repeated identical errors for a short window to avoid log
+      // spam while still recording the first occurrence for visibility.
+      if (errMsg === lastCatalogFetchErrorMessage && now - lastCatalogFetchErrorAt < CATALOG_ERROR_SUPPRESSION_MS) {
+        // Optionally emit a debug-level message if supported, otherwise remain silent.
+        try {
+          if (typeof (api.logger as any).debug === "function") {
+            (api.logger as any).debug(`[nexus-toolbridge] Suppressing repeated catalog refresh error: ${errMsg}`);
+          }
+        } catch {
+          // ignore logging failure
+        }
+      } else {
+        api.logger.error(`[nexus-toolbridge] Failed to refresh tool catalog (${reason}): ${errMsg}`);
+        lastCatalogFetchErrorMessage = errMsg;
+        lastCatalogFetchErrorAt = now;
+      }
+
       toolCatalogState.fetchedAt = Date.now();
     } finally {
       toolCatalogState.refreshPromise = null;
